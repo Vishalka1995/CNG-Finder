@@ -4,6 +4,11 @@ module.exports = {
   // Metro rebuild visibly slower, especially on a OneDrive-synced path.
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  // "class", not the default "media". NativeWind's web runtime throws
+  // "Cannot manually set color scheme, as dark mode is type 'media'" when
+  // anything (e.g. expo-status-bar) sets the scheme at runtime. The app is
+  // light-only by design, so class mode is correct as well as safe.
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
