@@ -49,9 +49,24 @@ export const STORAGE_KEYS = {
   recentSearches: "cngnow.recent_searches",
 } as const;
 
-/** True when the app has the env vars it needs to talk to Supabase. */
-export const isSupabaseConfigured = (): boolean =>
-  SUPABASE_URL.length > 0 && SUPABASE_ANON_KEY.length > 0;
+/**
+ * Values in .env.example (and the placeholders we ship for first run) are
+ * non-empty but not real. Treating them as configured would send the app off to
+ * a host that does not exist, so they are detected and rejected here.
+ */
+const isPlaceholder = (value: string): boolean =>
+  value.length === 0 || value.toLowerCase().includes("placeholder");
 
-/** True when a MapTiler key is present; the basemap is blank without one. */
-export const isMapConfigured = (): boolean => MAPTILER_KEY.length > 0;
+/** True when the app has real env vars for Supabase. */
+export const isSupabaseConfigured = (): boolean =>
+  !isPlaceholder(SUPABASE_URL) && !isPlaceholder(SUPABASE_ANON_KEY);
+
+/** True when a real MapTiler key is present; the basemap is blank without one. */
+export const isMapConfigured = (): boolean => !isPlaceholder(MAPTILER_KEY);
+
+/**
+ * True when there is no real Supabase project configured, in which case the app
+ * serves built-in demo stations so every screen is explorable. It switches off
+ * automatically as soon as real keys are present in .env.
+ */
+export const isDemoMode = (): boolean => !isSupabaseConfigured();

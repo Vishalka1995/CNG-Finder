@@ -96,6 +96,11 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="station/[id]" />
+          <Stack.Screen
+            name="report/[stationId]"
+            options={{ presentation: "modal" }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

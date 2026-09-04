@@ -5,11 +5,14 @@ import {
   NEARBY_RADIUS_M,
   STATION_CACHE_MS,
   STORAGE_KEYS,
+  isDemoMode,
   isSupabaseConfigured,
 } from "@/constants/config";
+import { summarize } from "@/lib/confidence";
+import { addDemoReport, getDemoReports, getDemoStations } from "@/lib/demoData";
 import type { Coords } from "@/lib/location";
 import { supabase } from "@/lib/supabase";
-import type { NearbyStation } from "@/types/database";
+import type { NearbyStation, StationStatus } from "@/types/database";
 
 interface StationState {
   stations: NearbyStation[];
@@ -18,6 +21,8 @@ interface StationState {
   error: string | null;
   /** True when `stations` came from AsyncStorage rather than the network. */
   isStale: boolean;
+  /** True when the list is built-in demo data, not a real backend. */
+  isDemo: boolean;
   lastFetchedAt: number | null;
   selectedStationId: string | null;
 
@@ -25,6 +30,12 @@ interface StationState {
   loadCached: () => Promise<void>;
   selectStation: (id: string | null) => void;
   getStation: (id: string) => NearbyStation | undefined;
+  /**
+   * Recomputes one station immediately after the user reports it, so the marker
+   * and badge change without waiting for a refetch. Reconciled by the next
+   * successful fetchNearby.
+   */
+  applyOptimisticReport: (stationId: string, status: StationStatus) => void;
 }
 
 export const useStationStore = create<StationState>((set, get) => ({
@@ -32,6 +43,7 @@ export const useStationStore = create<StationState>((set, get) => ({
   isLoading: false,
   error: null,
   isStale: false,
+  isDemo: false,
   lastFetchedAt: null,
   selectedStationId: null,
 
@@ -48,6 +60,19 @@ export const useStationStore = create<StationState>((set, get) => ({
       lastFetchedAt !== null &&
       Date.now() - lastFetchedAt < STATION_CACHE_MS
     ) {
+      return;
+    }
+
+    // No real backend yet: serve built-in stations so the app is explorable.
+    if (isDemoMode()) {
+      set({
+        stations: getDemoStations(coords),
+        isLoading: false,
+        error: null,
+        isStale: false,
+        isDemo: true,
+        lastFetchedAt: Date.now(),
+      });
       return;
     }
 
@@ -76,6 +101,7 @@ export const useStationStore = create<StationState>((set, get) => ({
         isLoading: false,
         error: null,
         isStale: false,
+        isDemo: false,
         lastFetchedAt: Date.now(),
       });
 
@@ -113,4 +139,38 @@ export const useStationStore = create<StationState>((set, get) => ({
   selectStation: (id) => set({ selectedStationId: id }),
 
   getStation: (id) => get().stations.find((station) => station.id === id),
+
+  applyOptimisticReport: (stationId, status) => {
+    if (isDemoMode()) addDemoReport(stationId, status, null);
+
+    set((state) => ({
+      stations: state.stations.map((station) => {
+        if (station.id !== stationId) return station;
+
+        // In demo mode the full report history is available, so the summary is
+        // exact. Against the real backend only aggregates are held locally, so
+        // the fresh report is blended with a synthetic stand-in for the
+        // existing ones -- close enough until the next fetch reconciles it.
+        const now = new Date().toISOString();
+        const history = isDemoMode()
+          ? getDemoReports(stationId)
+          : [
+              { status, created_at: now },
+              ...(station.status && station.last_reported_at
+                ? [{ status: station.status, created_at: station.last_reported_at }]
+                : []),
+            ];
+
+        const summary = summarize(history);
+
+        return {
+          ...station,
+          status: summary.status,
+          confidence: summary.confidence,
+          report_count: summary.reportCount,
+          last_reported_at: summary.lastReportedAt ?? now,
+        };
+      }),
+    }));
+  },
 }));

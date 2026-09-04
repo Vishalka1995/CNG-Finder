@@ -1,3 +1,5 @@
+import { useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,7 +24,9 @@ export default function MapScreen() {
   const [hasLocation, setHasLocation] = useState(false);
   const [locating, setLocating] = useState(true);
 
-  const { stations, isLoading, error, isStale, fetchNearby, loadCached } = useStationStore();
+  const router = useRouter();
+  const { stations, isLoading, error, isStale, isDemo, fetchNearby, loadCached } =
+    useStationStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = stations.find((station) => station.id === selectedId) ?? null;
 
@@ -88,6 +92,14 @@ export default function MapScreen() {
           </Text>
         </View>
 
+        {isDemo ? (
+          <View className="mx-4 mt-2 rounded-xl bg-queue/15 px-4 py-2">
+            <Text className="font-medium text-label text-ink">
+              Demo data — connect Supabase to see real stations
+            </Text>
+          </View>
+        ) : null}
+
         {isStale ? (
           <View className="mx-4 mt-2 rounded-xl bg-queue/15 px-4 py-2">
             <Text className="font-medium text-label text-ink">
@@ -142,6 +154,32 @@ export default function MapScreen() {
               ? ` · last report ${timeAgo(selected.last_reported_at)}`
               : ""}
           </Text>
+
+          <View className="mt-4 flex-row gap-3">
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({ pathname: "/station/[id]", params: { id: selected.id } })
+              }
+              className="min-h-[44px] flex-1 flex-row items-center justify-center rounded-xl border border-slate-300 active:opacity-70"
+            >
+              <Text className="font-semibold text-caption text-ink">Details</Text>
+              <ChevronRight color={COLORS.ink} size={16} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({
+                  pathname: "/report/[stationId]",
+                  params: { stationId: selected.id },
+                })
+              }
+              className="min-h-[44px] flex-1 items-center justify-center rounded-xl bg-primary active:opacity-80"
+            >
+              <Text className="font-semibold text-caption text-white">Report</Text>
+            </Pressable>
+          </View>
         </View>
       ) : null}
     </View>
