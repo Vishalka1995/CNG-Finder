@@ -30,8 +30,21 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (.env holds real keys and must never be committed;
+# .env.example is the committed template)
+.env
 .env*.local
+!.env.example
+
+# secrets used only by local seed/import scripts
+.env.scripts
+
+# keystores
+*.keystore
+
+# Windows / OneDrive cruft
+desktop.ini
+Thumbs.db
 
 # typescript
 *.tsbuildinfo

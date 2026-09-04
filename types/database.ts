@@ -1,0 +1,167 @@
+/**
+ * Database types.
+ *
+ * Hand-written to match supabase/migrations/0001_init.sql so the app typechecks
+ * before a Supabase project exists. Once the project is live, regenerate with:
+ *
+ *   npx supabase gen types typescript --project-id <ref> |
+ *     Out-File -Encoding utf8 types/database.ts
+ *
+ * (PowerShell 5.1's `>` writes UTF-16, which TypeScript rejects -- use Out-File.)
+ */
+
+export type StationStatus = "available" | "long_queue" | "not_available";
+
+export type ConfidenceLevel = "high" | "medium" | "low" | "mixed" | "unknown";
+
+/** A row as returned by the `nearby_stations` RPC. */
+export type NearbyStation = {
+  id: string;
+  name: string;
+  address: string | null;
+  area: string | null;
+  operator: string | null;
+  is_24x7: boolean;
+  opening_time: string | null;
+  closing_time: string | null;
+  phone: string | null;
+  latitude: number;
+  longitude: number;
+  distance_m: number;
+  /** Null when no reports exist in the confidence window. */
+  status: StationStatus | null;
+  confidence: ConfidenceLevel;
+  report_count: number;
+  last_reported_at: string | null;
+}
+
+/** A row as returned by the `station_reports` RPC. Carries no reporter identity. */
+export type StationReport = {
+  id: string;
+  status: StationStatus;
+  note: string | null;
+  created_at: string;
+}
+
+export type StationRow = {
+  id: string;
+  name: string;
+  address: string | null;
+  area: string | null;
+  city: string;
+  operator: string | null;
+  is_24x7: boolean;
+  opening_time: string | null;
+  closing_time: string | null;
+  phone: string | null;
+  osm_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type UserRow = {
+  id: string;
+  auth_user_id: string;
+  device_id: string;
+  display_name: string | null;
+  reports_count: number;
+  trust_score: number;
+  created_at: string;
+  last_seen_at: string;
+}
+
+export type FavoriteRow = {
+  id: string;
+  auth_user_id: string;
+  station_id: string;
+  created_at: string;
+}
+
+/** Payload for inserting a report. Server overwrites auth_user_id and distance_m. */
+export type ReportInsert = {
+  station_id: string;
+  status: StationStatus;
+  note?: string | null;
+  device_id?: string | null;
+  reported_location: string;
+}
+
+/**
+ * Schema shape expected by supabase-js.
+ *
+ * Three structural requirements, each of which silently collapses the whole
+ * schema to `never` (making every insert and rpc call fail to typecheck) if
+ * you get it wrong:
+ *
+ *   1. Every table needs Row / Insert / Update / Relationships.
+ *   2. The schema needs `Views`, `Functions`, `Enums` and `CompositeTypes`.
+ *   3. Row and payload types above MUST be `type` aliases, not `interface`.
+ *      The client constrains them to `Record<string, unknown>`, and TypeScript
+ *      interfaces have no implicit index signature, so they fail that check.
+ *      This is the non-obvious one -- do not "tidy" them back into interfaces.
+ */
+export interface Database {
+  public: {
+    Tables: {
+      stations: {
+        Row: StationRow;
+        Insert: Partial<StationRow> & { name: string };
+        Update: Partial<StationRow>;
+        Relationships: [];
+      };
+      users: {
+        Row: UserRow;
+        Insert: { auth_user_id: string; device_id: string; display_name?: string | null };
+        Update: Partial<UserRow>;
+        Relationships: [];
+      };
+      favorites: {
+        Row: FavoriteRow;
+        Insert: { station_id: string; auth_user_id?: string };
+        Update: Partial<FavoriteRow>;
+        Relationships: [];
+      };
+      reports: {
+        Row: {
+          id: string;
+          station_id: string;
+          auth_user_id: string;
+          device_id: string | null;
+          status: StationStatus;
+          note: string | null;
+          distance_m: number | null;
+          created_at: string;
+        };
+        Insert: ReportInsert;
+        // Append-only: the database has no UPDATE policy on reports.
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Update: {};
+        Relationships: [];
+      };
+    };
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    Views: {};
+    Functions: {
+      nearby_stations: {
+        Args: {
+          lat: number;
+          lng: number;
+          radius_m?: number;
+          max_results?: number;
+        };
+        Returns: NearbyStation[];
+      };
+      station_reports: {
+        Args: { station: string; max_results?: number };
+        Returns: StationReport[];
+      };
+    };
+    Enums: {
+      station_status: StationStatus;
+      confidence_level: ConfidenceLevel;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    CompositeTypes: {};
+  };
+}

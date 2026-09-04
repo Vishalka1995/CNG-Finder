@@ -1,0 +1,149 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { StationMap } from "@/components/map/StationMap";
+import { StatusBadge } from "@/components/station/StatusBadge";
+import { COLORS } from "@/constants/colors";
+import { BANGALORE_CENTER, isMapConfigured } from "@/constants/config";
+import { confidenceLabel, timeAgo } from "@/lib/confidence";
+import { formatDistance, getCurrentCoords, type Coords } from "@/lib/location";
+import { useStationStore } from "@/stores/stationStore";
+
+/**
+ * Home / map screen.
+ *
+ * Phase 1 scope: map, live-coloured markers, clustering, and a simple preview
+ * card for the tapped station. The draggable bottom sheet, directions, and the
+ * report flow arrive in Phase 2.
+ */
+export default function MapScreen() {
+  const [center, setCenter] = useState<Coords>({ ...BANGALORE_CENTER });
+  const [hasLocation, setHasLocation] = useState(false);
+  const [locating, setLocating] = useState(true);
+
+  const { stations, isLoading, error, isStale, fetchNearby, loadCached } = useStationStore();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = stations.find((station) => station.id === selectedId) ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const init = async (): Promise<void> => {
+      await loadCached();
+      const result = await getCurrentCoords();
+      if (cancelled) return;
+
+      setCenter(result.coords);
+      setHasLocation(!result.isFallback);
+      setLocating(false);
+      await fetchNearby(result.coords);
+    };
+
+    void init();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchNearby, loadCached]);
+
+  // Without a MapTiler key the basemap renders as a blank grey grid, which
+  // looks like a bug. Say so explicitly instead.
+  if (!isMapConfigured()) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-surface px-6">
+        <Text className="text-center font-semibold text-heading text-ink">
+          Map key missing
+        </Text>
+        <Text className="mt-2 text-center font-sans text-caption text-muted">
+          Set EXPO_PUBLIC_MAPTILER_KEY in your .env file and restart the dev server.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (locating) {
+    return (
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator color={COLORS.primary} />
+        <Text className="mt-3 font-sans text-caption text-muted">Finding you…</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-surface">
+      <StationMap
+        stations={stations}
+        center={center}
+        showUserLocation={hasLocation}
+        onSelectStation={setSelectedId}
+      />
+
+      {/* Header pill */}
+      <SafeAreaView className="absolute left-0 right-0 top-0" edges={["top"]}>
+        <View className="mx-4 mt-2 flex-row items-center justify-between rounded-2xl bg-white px-4 py-3 shadow">
+          <Text className="font-bold text-heading text-ink">CNG Now</Text>
+          <Text className="font-sans text-label text-muted">
+            {isLoading ? "Updating…" : `${stations.length} nearby`}
+          </Text>
+        </View>
+
+        {isStale ? (
+          <View className="mx-4 mt-2 rounded-xl bg-queue/15 px-4 py-2">
+            <Text className="font-medium text-label text-ink">
+              Showing saved data — you appear to be offline
+            </Text>
+          </View>
+        ) : null}
+
+        {error && !isStale ? (
+          <View className="mx-4 mt-2 rounded-xl bg-unavailable/15 px-4 py-2">
+            <Text className="font-medium text-label text-ink">{error}</Text>
+          </View>
+        ) : null}
+      </SafeAreaView>
+
+      {/* Empty state */}
+      {!isLoading && stations.length === 0 && !error ? (
+        <View className="absolute bottom-6 left-4 right-4 rounded-2xl bg-white p-4 shadow">
+          <Text className="font-semibold text-body text-ink">No stations nearby</Text>
+          <Text className="mt-1 font-sans text-caption text-muted">
+            We could not find CNG stations within 10 km of you.
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Selected station preview -- becomes a draggable sheet in Phase 2 */}
+      {selected ? (
+        <View className="absolute bottom-6 left-4 right-4 rounded-2xl bg-white p-4 shadow-lg">
+          <View className="flex-row items-start justify-between">
+            <View className="flex-1 pr-3">
+              <Text className="font-semibold text-body text-ink">{selected.name}</Text>
+              <Text className="mt-1 font-sans text-caption text-muted">
+                {formatDistance(selected.distance_m)} away
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSelectedId(null)}
+              className="px-2 py-1 active:opacity-60"
+            >
+              <Text className="font-medium text-caption text-muted">Close</Text>
+            </Pressable>
+          </View>
+
+          <View className="mt-3">
+            <StatusBadge status={selected.status} />
+          </View>
+
+          <Text className="mt-2 font-sans text-label text-muted">
+            {confidenceLabel(selected.confidence, selected.report_count)}
+            {selected.last_reported_at
+              ? ` · last report ${timeAgo(selected.last_reported_at)}`
+              : ""}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}

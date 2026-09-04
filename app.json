@@ -1,25 +1,64 @@
 {
   "expo": {
-    "name": "CNGFinder",
-    "slug": "CNGFinder",
+    "name": "CNG Now",
+    "slug": "cng-now",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "cngnow",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.flatworld.cngnow",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "CNG Now uses your location to show nearby CNG stations and to verify you are at a station when you report its status."
+      }
     },
     "android": {
+      "package": "com.flatworld.cngnow",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#00A86B",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "CNG Now uses your location to show nearby CNG stations and verify station reports."
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }
