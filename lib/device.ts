@@ -60,6 +60,75 @@ async function writeStoredId(id: string): Promise<void> {
   }
 }
 
+/**
+ * Generates a v4 UUID, trying three sources in order of preference.
+ *
+ * `expo-crypto` declares `randomUUID` in its types, but the underlying native
+ * module is not always loaded (notably in the browser preview and before a
+ * dev-client build), where it is `undefined` at runtime. The type system will
+ * not warn you about this, so each source is feature-detected rather than
+ * assumed.
+ */
+function generateUUID(): string {
+  // 1. expo-crypto, when the native module is actually present.
+  try {
+    if (typeof Crypto.randomUUID === "function") return Crypto.randomUUID();
+  } catch {
+    // fall through
+  }
+
+  // 2. The Web Crypto API, available in browsers and modern JS engines.
+  try {
+    const webCrypto = globalThis.crypto;
+    if (webCrypto && typeof webCrypto.randomUUID === "function") {
+      return webCrypto.randomUUID();
+    }
+
+    // 3. Web Crypto without randomUUID: build a v4 UUID from random bytes.
+    if (webCrypto && typeof webCrypto.getRandomValues === "function") {
+      const bytes = webCrypto.getRandomValues(new Uint8Array(16));
+      return formatUUIDv4(bytes);
+    }
+  } catch {
+    // fall through
+  }
+
+  // 4. Last resort: expo-crypto's byte generator, then Math.random.
+  try {
+    if (typeof Crypto.getRandomBytes === "function") {
+      return formatUUIDv4(Crypto.getRandomBytes(16));
+    }
+  } catch {
+    // fall through
+  }
+
+  const fallback = new Uint8Array(16);
+  for (let i = 0; i < 16; i += 1) fallback[i] = Math.floor(Math.random() * 256);
+  return formatUUIDv4(fallback);
+}
+
+/** Formats 16 random bytes as a v4 UUID string. */
+function formatUUIDv4(input: Uint8Array): string {
+  const bytes = Uint8Array.from(input);
+
+  // Set the version (4) and variant (RFC 4122) bits.
+  bytes[6] = ((bytes[6] ?? 0) & 0x0f) | 0x40;
+  bytes[8] = ((bytes[8] ?? 0) & 0x3f) | 0x80;
+
+  const hex: string[] = [];
+  for (let i = 0; i < bytes.length; i += 1) {
+    hex.push((bytes[i] ?? 0).toString(16).padStart(2, "0"));
+  }
+
+  return [
+    hex.slice(0, 4).join(""),
+    hex.slice(4, 6).join(""),
+    hex.slice(6, 8).join(""),
+    hex.slice(8, 10).join(""),
+    hex.slice(10, 16).join(""),
+  ].join("-");
+}
+
 /** Returns this install's stable anonymous id, generating one on first run. */
 export async function getDeviceId(): Promise<string> {
   if (cachedDeviceId) return cachedDeviceId;
@@ -70,7 +139,7 @@ export async function getDeviceId(): Promise<string> {
     return existing;
   }
 
-  const generated = Crypto.randomUUID();
+  const generated = generateUUID();
   await writeStoredId(generated);
   cachedDeviceId = generated;
   return generated;
