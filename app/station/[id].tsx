@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
-import { ArrowLeft, Clock, Navigation, Phone, Store } from "lucide-react-native";
+import { ArrowLeft, Clock, Heart, Navigation, Phone, Store } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Linking as RNLinking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import { confidenceLabel, timeAgo } from "@/lib/confidence";
 import { getDemoReports } from "@/lib/demoData";
 import { formatDistance } from "@/lib/location";
 import { supabase } from "@/lib/supabase";
+import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
 import type { StationReport } from "@/types/database";
 
@@ -36,6 +37,13 @@ export default function StationDetailScreen() {
   const station = useStationStore((state) =>
     state.stations.find((entry) => entry.id === id),
   );
+
+  const { ids: favoriteIds, load: loadFavorites, toggle } = useFavoriteStore();
+  const isFavorite = id ? favoriteIds.includes(id) : false;
+
+  useEffect(() => {
+    void loadFavorites();
+  }, [loadFavorites]);
 
   const [reports, setReports] = useState<StationReport[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
@@ -137,6 +145,20 @@ export default function StationDetailScreen() {
         <Text className="ml-1 flex-1 font-semibold text-body text-ink" numberOfLines={1}>
           Station details
         </Text>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          onPress={() => void toggle(station.id)}
+          hitSlop={8}
+          className="h-10 w-10 items-center justify-center rounded-full active:opacity-60"
+        >
+          <Heart
+            color={isFavorite ? COLORS.unavailable : COLORS.muted}
+            fill={isFavorite ? COLORS.unavailable : "transparent"}
+            size={22}
+          />
+        </Pressable>
       </View>
 
       <ScrollView contentContainerClassName="px-6 py-6">

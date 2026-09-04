@@ -47,6 +47,7 @@ export const STORAGE_KEYS = {
   onboarded: "cngnow.onboarded",
   cachedStations: "cngnow.cached_stations",
   recentSearches: "cngnow.recent_searches",
+  favorites: "cngnow.favorites",
 } as const;
 
 /**
