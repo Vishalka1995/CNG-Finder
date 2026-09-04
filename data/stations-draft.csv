@@ -1,0 +1,22 @@
+osm_id,name,operator,address,area,latitude,longitude,is_24x7,opening_hours,phone,needs_review
+node/1466684135,Classic Auto Gas,Auto LPG,,,12.930966,77.600462,false,,,no-address
+node/12285541096,Go Gas,,,,13.039379,77.596215,false,,,no-address|no-operator
+way/631197946,Petronas,Petronas,,,12.923889,77.640766,false,,,no-address|way-centroid
+way/635317788,Indian Oil,Indian Oil,,,12.945250,77.618989,false,,,no-address|way-centroid
+way/640257945,JIO BP,JIO BP,,,13.165368,77.628968,false,,,no-address|way-centroid
+way/1114994682,GAIL,GAIL,,,13.154663,77.685096,false,,,no-address|way-centroid
+way/1120737746,GAIL,GAIL,,,12.996147,77.519409,false,,,no-address|way-centroid
+way/1210592626,Gail Gas,GAIL,,,12.947388,77.579700,false,,,no-address|way-centroid
+way/1239012965,GAIL,GAIL,,,13.057551,77.546644,false,,,no-address|way-centroid
+way/1274548649,Totalgaz,Totalgaz,,,12.921376,77.600434,false,,,no-address|way-centroid
+way/1279894893,GAIL Gas CNG Station,GAIL,,,13.153425,77.728555,false,,,no-address|way-centroid
+way/1284773488,GAIL Gas,GAIL,,,13.040566,77.618612,false,,,no-address|way-centroid
+way/1287042070,Bharat Petroleum,BPCL,,,13.136912,77.568530,false,,,no-address|way-centroid
+way/1324379093,Gail Gas,GAIL,,,12.946892,77.746957,false,,,no-address|way-centroid
+way/1327758223,GAIL,GAIL,,,12.889281,77.437879,false,,,no-address|way-centroid
+way/1328835914,GAIL,GAIL,,,12.871422,77.583460,false,,,no-address|way-centroid
+way/1351989866,GAIL CNG,GAIL,,,12.873365,77.540406,false,,,no-address|way-centroid
+way/1353654972,Indian Oil,Indian Oil,,,12.904071,77.746709,false,,,no-address|way-centroid
+way/1415395892,Indian Auto Gas,,,,12.951109,77.745369,false,,,no-address|way-centroid|no-operator
+way/1454788768,Gail gas CNG station,GAIL,,,13.005028,77.685633,false,,,no-address|way-centroid
+way/1499403386,GAIL's,GAIL,,,13.065986,77.641431,false,,,no-address|way-centroid

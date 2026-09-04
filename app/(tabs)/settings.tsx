@@ -1,5 +1,6 @@
 import Constants from "expo-constants";
-import { ChevronRight, Info, Mail, Share2, Star } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ChevronRight, Info, Mail, RadioTower, Share2, Star } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -32,6 +33,7 @@ function SettingsRow({ icon, label, onPress }: RowProps) {
 }
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
@@ -82,6 +84,17 @@ export default function SettingsScreen() {
             A report counts for less as it ages, so a green station means someone
             confirmed gas recently — not hours ago.
           </Text>
+        </View>
+
+        {/* Your activity */}
+        <Text className="mt-8 font-semibold text-caption text-muted">YOUR ACTIVITY</Text>
+
+        <View className="mt-1 rounded-2xl bg-slate-50 px-4">
+          <SettingsRow
+            icon={<RadioTower color={COLORS.muted} size={18} />}
+            label="My reports"
+            onPress={() => router.push("/my-reports")}
+          />
         </View>
 
         {/* Actions */}

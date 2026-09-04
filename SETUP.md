@@ -1,4 +1,4 @@
-# CNG Now — Phase 1 setup
+# CNG Now — setup
 
 The code is scaffolded and verified. These are the steps that need your
 accounts, in order. Budget about 45 minutes, most of it waiting on the build.
@@ -133,17 +133,96 @@ before running it.
 
 ---
 
-## What is deliberately not built yet
+## Build status
 
-Phase 1 covers scaffold, schema and the map. Still to come:
+| Phase | Scope | State |
+|---|---|---|
+| 1 | Scaffold, schema, onboarding, map component | Built |
+| 2 | Station detail, report flow, optimistic updates | Built |
+| 3 | List, favorites, search, settings, My Reports | Built |
+| 4 | OSM fetch + import scripts | Built (see below) |
+| 5 | Push notifications, analytics, release build | Not started |
 
-- **Phase 2** — station detail sheet, the report flow, optimistic marker updates
-- **Phase 3** — list view, favorites, search, settings, offline cache
-- **Phase 4** — real Bangalore station data (OSM pull → your review → import)
-- **Phase 5** — push notifications, analytics, release build
+**Everything above has been verified only by typecheck, lint, and a successful
+bundle.** Nothing has yet run against a live Supabase project or rendered a real
+map — the app currently serves built-in demo stations. The Checkpoint below is
+what turns "compiles" into "works".
 
-The List and Favorites tabs are intentional placeholders.
+⚠️ The 10 stations in `0002_seed_test_stations.sql` use **approximate**
+coordinates — fine for testing the map, not accurate enough for real reporting,
+since the 300 m proximity rule makes coordinate accuracy functional. The Phase 4
+import replaces them.
 
-⚠️ The 10 seeded stations use **approximate** coordinates — fine for testing the
-map, not accurate enough for real reporting, since the 300m proximity rule makes
-coordinate accuracy functional. Phase 4 replaces them.
+---
+
+## Importing real Bangalore stations (Phase 4)
+
+Two scripts turn OpenStreetMap data into rows in your `stations` table. Run
+them after the Supabase steps above.
+
+### 1. Fetch candidates from OpenStreetMap
+
+```powershell
+npm run stations:fetch
+```
+
+Queries the Overpass API for CNG stations in the Greater Bangalore bounding box
+and writes `data/stations-draft.csv`.
+
+**A real run returned 21 stations, every one of them flagged for review** — 19
+were "way centroids" (the centre of a building outline rather than the actual
+forecourt), none had street addresses, and at least one was an Auto **LPG**
+station, not CNG. That is normal for OSM coverage in India, and it is exactly
+why the next step is not optional.
+
+### 2. Review the CSV — the important step
+
+Open `data/stations-draft.csv` in Excel and check every row:
+
+- **Verify each latitude/longitude against satellite view.** This matters more
+  than anything else on the list: the app refuses reports made more than 300 m
+  from a station's pin, so a misplaced pin makes that station permanently
+  unreportable. A way-centroid is often 100–300 m off.
+- **Delete anything that isn't CNG** (Auto LPG stations show up in the results).
+- **Fill in missing names, operators and addresses.**
+- **Add stations OSM is missing** — coverage is partial. Leave `osm_id` blank on
+  new rows; the importer generates a stable id from the name.
+- **Clear the `needs_review` column** on rows you've checked.
+
+### 3. Create the import helper (once)
+
+In the Supabase SQL editor, run
+[supabase/migrations/0003_import_helper.sql](supabase/migrations/0003_import_helper.sql).
+
+It adds a single `upsert_station` function with typed parameters, granted only
+to the service role. A geography column can't be written through PostgREST's
+JSON API, and a generic "run this SQL" function would be a permanent hazard
+sitting in your database — this is the narrow alternative.
+
+### 4. Credentials for the importer
+
+```powershell
+Copy-Item .env.scripts.example .env.scripts
+```
+
+Fill in `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (Dashboard → Settings →
+API).
+
+⚠️ The **service_role key bypasses Row Level Security entirely**. It belongs
+only in `.env.scripts`, which is git-ignored. Never put it in `.env`, and never
+let it ship inside the app.
+
+### 5. Import
+
+```powershell
+npm run stations:import    # dry run - validates and shows a preview
+npm run stations:commit    # actually writes to Supabase
+```
+
+The dry run is the default, so an accidental run cannot write anything. It
+rejects rows with missing names, non-numeric coordinates, coordinates outside
+Bangalore, and — importantly — latitude/longitude that look transposed, which is
+the single most common way to corrupt geographic data.
+
+Re-running is safe: rows are upserted on `osm_id`, so a second import updates
+rather than duplicates.

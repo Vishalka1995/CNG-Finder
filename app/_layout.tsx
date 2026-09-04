@@ -98,6 +98,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="station/[id]" />
           <Stack.Screen name="search" />
+          <Stack.Screen name="my-reports" />
           <Stack.Screen
             name="report/[stationId]"
             options={{ presentation: "modal" }}

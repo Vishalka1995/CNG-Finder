@@ -20,6 +20,7 @@ import { addDemoReport, getDemoStationCoords, hasDemoReport } from "@/lib/demoDa
 import { getDeviceId } from "@/lib/device";
 import { distanceMeters, formatDistance, getCurrentCoords } from "@/lib/location";
 import { parseReportError, supabase, toPointWKT } from "@/lib/supabase";
+import { useReportStore } from "@/stores/reportStore";
 import { useStationStore } from "@/stores/stationStore";
 import type { StationStatus } from "@/types/database";
 
@@ -69,6 +70,7 @@ export default function ReportScreen() {
     state.stations.find((entry) => entry.id === stationId),
   );
   const applyOptimisticReport = useStationStore((state) => state.applyOptimisticReport);
+  const recordReport = useReportStore((state) => state.record);
 
   const [selected, setSelected] = useState<StationStatus | null>(null);
   const [note, setNote] = useState("");
@@ -106,6 +108,12 @@ export default function ReportScreen() {
 
         addDemoReport(stationId, selected, note.trim() || null);
         applyOptimisticReport(stationId, selected);
+        await recordReport({
+          stationId,
+          stationName: station?.name ?? "Unknown station",
+          status: selected,
+          note: note.trim() || null,
+        });
         router.back();
         return;
       }
@@ -148,6 +156,12 @@ export default function ReportScreen() {
       }
 
       applyOptimisticReport(stationId, selected);
+      await recordReport({
+        stationId,
+        stationName: station?.name ?? "Unknown station",
+        status: selected,
+        note: note.trim() || null,
+      });
       router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
