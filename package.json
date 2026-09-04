@@ -23,7 +23,7 @@
     "lucide-react-native": "^1.41.0",
     "nativewind": "^4.2.6",
     "react": "^19.2.8",
-    "react-dom": "19.2.3",
+    "react-dom": "^19.2.8",
     "react-hook-form": "^7.87.0",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
@@ -50,6 +50,7 @@
   "scripts": {
     "start": "expo start --dev-client",
     "start:clear": "expo start --dev-client --clear",
+    "web": "expo start --web",
     "android": "expo run:android",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
