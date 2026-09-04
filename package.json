@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
+    "@expo/metro-runtime": "~57.0.15",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@maplibre/maplibre-react-native": "^11.3.8",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -22,6 +23,7 @@
     "lucide-react-native": "^1.41.0",
     "nativewind": "^4.2.6",
     "react": "^19.2.8",
+    "react-dom": "19.2.3",
     "react-hook-form": "^7.87.0",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
@@ -29,6 +31,7 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-url-polyfill": "^4.0.0",
+    "react-native-web": "^0.21.2",
     "react-native-worklets": "0.10.1",
     "zustand": "^5.0.15"
   },
