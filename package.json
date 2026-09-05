@@ -60,7 +60,8 @@
     "build:preview": "npx eas-cli build --profile preview --platform android",
     "stations:fetch": "node scripts/fetch-osm-stations.mjs",
     "stations:import": "node scripts/import-stations.mjs",
-    "stations:commit": "node scripts/import-stations.mjs --commit"
+    "stations:commit": "node scripts/import-stations.mjs --commit",
+    "stations:review": "node scripts/review-stations.mjs"
   },
   "overrides": {
     "tailwindcss": "3.4.17"
