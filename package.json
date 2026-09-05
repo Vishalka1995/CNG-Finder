@@ -55,8 +55,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
-    "build:dev": "eas build --profile development --platform android",
-    "build:preview": "eas build --profile preview --platform android",
+    "build:dev": "npx eas-cli build --profile development --platform android",
+    "build:preview": "npx eas-cli build --profile preview --platform android",
     "stations:fetch": "node scripts/fetch-osm-stations.mjs",
     "stations:import": "node scripts/import-stations.mjs",
     "stations:commit": "node scripts/import-stations.mjs --commit"
