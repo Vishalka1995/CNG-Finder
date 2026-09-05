@@ -226,3 +226,30 @@ the single most common way to corrupt geographic data.
 
 Re-running is safe: rows are upserted on `osm_id`, so a second import updates
 rather than duplicates.
+
+---
+
+## Before your first preview or production build
+
+`.env` is **not** uploaded to EAS. A development build does not care — the phone
+loads JavaScript from your laptop's Metro server, so your local `.env` applies
+at runtime.
+
+A `preview` or `production` build is different: the JavaScript is bundled into
+the APK, so the keys must exist on EAS or the app ships pointing at `undefined`
+and silently fails to reach Supabase.
+
+Register them once per environment:
+
+```powershell
+npx eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_URL --value "https://zbxisqbjzuzzywrrqmpq.supabase.co" --visibility plaintext
+npx eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<your anon key>" --visibility plaintext
+npx eas env:create --environment preview --name EXPO_PUBLIC_MAPTILER_KEY --value "<your maptiler key>" --visibility plaintext
+```
+
+Repeat with `--environment production` when you get there.
+
+`plaintext` visibility is correct for all three: they are `EXPO_PUBLIC_` values,
+which are inlined into the bundle and readable by anyone who unzips the APK.
+Row Level Security is what actually protects the database. The `service_role`
+key must never be registered this way.
