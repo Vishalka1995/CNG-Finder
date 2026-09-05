@@ -1,14 +1,15 @@
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
-import { ChevronRight, Info, Mail, RadioTower, Share2, Star } from "lucide-react-native";
+import { Bell, ChevronRight, Info, Mail, RadioTower, Share2, Star } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, Share, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { COLORS } from "@/constants/colors";
 import { isDemoMode } from "@/constants/config";
 import { getDeviceId } from "@/lib/device";
 import { supabase } from "@/lib/supabase";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 
 const FEEDBACK_EMAIL = "vishal.a@flatworldsolutions.com";
 
@@ -32,18 +33,50 @@ function SettingsRow({ icon, label, onPress }: RowProps) {
   );
 }
 
+interface ToggleRowProps {
+  icon: React.ReactNode;
+  label: string;
+  sublabel?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+}
+
+function ToggleRow({ icon, label, sublabel, value, onValueChange }: ToggleRowProps) {
+  return (
+    <View className="flex-row items-center py-4">
+      {icon}
+      <View className="ml-3 flex-1">
+        <Text className="font-sans text-caption text-ink">{label}</Text>
+        {sublabel ? (
+          <Text className="mt-0.5 font-sans text-label text-muted">{sublabel}</Text>
+        ) : null}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ false: "#E2E8F0", true: COLORS.primary }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
+  const { notificationsEnabled, load: loadPreferences, setNotificationsEnabled } =
+    usePreferencesStore();
+
   useEffect(() => {
     void getDeviceId().then(setDeviceId);
     void supabase.auth.getSession().then(({ data }) => {
       setUserId(data.session?.user.id ?? null);
     });
-  }, []);
+    void loadPreferences();
+  }, [loadPreferences]);
 
   const version = Constants.expoConfig?.version ?? "1.0.0";
 
@@ -94,6 +127,19 @@ export default function SettingsScreen() {
             icon={<RadioTower color={COLORS.muted} size={18} />}
             label="My reports"
             onPress={() => router.push("/my-reports")}
+          />
+        </View>
+
+        {/* Notifications */}
+        <Text className="mt-8 font-semibold text-caption text-muted">NOTIFICATIONS</Text>
+
+        <View className="mt-1 rounded-2xl bg-slate-50 px-4">
+          <ToggleRow
+            icon={<Bell color={COLORS.muted} size={18} />}
+            label="Station alerts"
+            sublabel="Get notified when a favourite station is reported available"
+            value={notificationsEnabled}
+            onValueChange={(value) => void setNotificationsEnabled(value)}
           />
         </View>
 
