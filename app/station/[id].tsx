@@ -1,8 +1,15 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { ArrowLeft, Clock, Heart, Navigation, Phone, Store } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { Linking as RNLinking, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Linking as RNLinking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ReportTimeline } from "@/components/station/ReportTimeline";
@@ -48,20 +55,14 @@ export default function StationDetailScreen() {
   const [reports, setReports] = useState<StationReport[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [reportsError, setReportsError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Refetches whenever the station id changes, and after a new report lands
-  // (last_reported_at moves), so the timeline stays in step with the status.
-  const lastReportedAt = station?.last_reported_at ?? null;
-
-  useEffect(() => {
-    if (!id) return undefined;
-
-    let cancelled = false;
-
-    const load = async (): Promise<void> => {
+  /** Shared by the mount effect and pull-to-refresh; never itself cancelled. */
+  const loadReports = useCallback(
+    async (stationId: string, isCancelled: () => boolean = () => false): Promise<void> => {
       if (isDemoMode()) {
-        if (!cancelled) {
-          setReports(getDemoReports(id).slice(0, 5));
+        if (!isCancelled()) {
+          setReports(getDemoReports(stationId).slice(0, 5));
           setReportsError(null);
           setLoadingReports(false);
         }
@@ -70,31 +71,52 @@ export default function StationDetailScreen() {
 
       try {
         const { data, error } = await supabase.rpc("station_reports", {
-          station: id,
+          station: stationId,
           max_results: 5,
         });
         if (error) throw new Error(error.message);
-        if (!cancelled) {
+        if (!isCancelled()) {
           setReports(data ?? []);
           setReportsError(null);
         }
       } catch (err) {
-        if (!cancelled) {
-          setReportsError(
-            err instanceof Error ? err.message : "Could not load reports",
-          );
+        if (!isCancelled()) {
+          setReportsError(err instanceof Error ? err.message : "Could not load reports");
         }
       } finally {
-        if (!cancelled) setLoadingReports(false);
+        if (!isCancelled()) setLoadingReports(false);
       }
-    };
+    },
+    [],
+  );
 
-    void load();
+  // Refetches whenever the station id changes, and after a new report lands
+  // (last_reported_at moves), so the timeline stays in step with the status.
+  const lastReportedAt = station?.last_reported_at ?? null;
 
+  useEffect(() => {
+    if (!id) return undefined;
+    let cancelled = false;
+    // Deferred a tick so the fetch (and its eventual setState calls) runs
+    // after this render commits, rather than synchronously inside the effect.
+    const handle = setTimeout(() => {
+      void loadReports(id, () => cancelled);
+    }, 0);
     return () => {
       cancelled = true;
+      clearTimeout(handle);
     };
-  }, [id, lastReportedAt]);
+  }, [id, lastReportedAt, loadReports]);
+
+  const refresh = async (): Promise<void> => {
+    if (!id) return;
+    setRefreshing(true);
+    try {
+      await loadReports(id);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const openDirections = (): void => {
     if (!station) return;
@@ -161,7 +183,16 @@ export default function StationDetailScreen() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerClassName="px-6 py-6">
+      <ScrollView
+        contentContainerClassName="px-6 py-6"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={COLORS.primary}
+          />
+        }
+      >
         <Text className="font-bold text-title text-ink">{station.name}</Text>
 
         {station.address ? (

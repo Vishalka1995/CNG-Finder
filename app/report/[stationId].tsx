@@ -18,10 +18,12 @@ import { COLORS } from "@/constants/colors";
 import { REPORT_PROXIMITY_M, isDemoMode } from "@/constants/config";
 import { addDemoReport, getDemoStationCoords, hasDemoReport } from "@/lib/demoData";
 import { getDeviceId } from "@/lib/device";
+import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { distanceMeters, formatDistance, getCurrentCoords } from "@/lib/location";
 import { parseReportError, supabase, toPointWKT } from "@/lib/supabase";
 import { useReportStore } from "@/stores/reportStore";
 import { useStationStore } from "@/stores/stationStore";
+import { showToast } from "@/stores/toastStore";
 import type { StationStatus } from "@/types/database";
 
 const NOTE_MAX = 140;
@@ -77,6 +79,13 @@ export default function ReportScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /** Every rejection path routes through here, so the error haptic fires once,
+   *  consistently, without threading it into each individual call site. */
+  const failWith = (message: string): void => {
+    hapticError();
+    setError(message);
+  };
+
   const submit = async (): Promise<void> => {
     if (!selected || !stationId) return;
 
@@ -87,7 +96,7 @@ export default function ReportScreen() {
       // Demo mode: mirror the real rules (including the rate limit) locally.
       if (isDemoMode()) {
         if (hasDemoReport(stationId)) {
-          setError(messageForError("RATE_LIMITED"));
+          failWith(messageForError("RATE_LIMITED"));
           return;
         }
 
@@ -99,7 +108,7 @@ export default function ReportScreen() {
         if (stationCoords && !fix.isFallback) {
           const away = distanceMeters(fix.coords, stationCoords);
           if (away > REPORT_PROXIMITY_M) {
-            setError(
+            failWith(
               `You are ${formatDistance(away)} from this station. Get within ${REPORT_PROXIMITY_M} m to report.`,
             );
             return;
@@ -114,6 +123,8 @@ export default function ReportScreen() {
           status: selected,
           note: note.trim() || null,
         });
+        hapticSuccess();
+        showToast("Thanks! Your report helps other drivers.");
         router.back();
         return;
       }
@@ -123,7 +134,7 @@ export default function ReportScreen() {
       const fix = await getCurrentCoords();
 
       if (fix.isFallback) {
-        setError(messageForError("LOCATION_REQUIRED"));
+        failWith(messageForError("LOCATION_REQUIRED"));
         return;
       }
 
@@ -133,7 +144,7 @@ export default function ReportScreen() {
           longitude: station.longitude,
         });
         if (away > REPORT_PROXIMITY_M) {
-          setError(
+          failWith(
             `You are ${formatDistance(away)} from this station. Get within ${REPORT_PROXIMITY_M} m to report.`,
           );
           return;
@@ -151,7 +162,7 @@ export default function ReportScreen() {
       });
 
       if (insertError) {
-        setError(messageForError(parseReportError(insertError.message)));
+        failWith(messageForError(parseReportError(insertError.message)));
         return;
       }
 
@@ -162,9 +173,11 @@ export default function ReportScreen() {
         status: selected,
         note: note.trim() || null,
       });
+      hapticSuccess();
+      showToast("Thanks! Your report helps other drivers.");
       router.back();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      failWith(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
     }

@@ -50,11 +50,16 @@ export const useStationStore = create<StationState>((set, get) => ({
   /**
    * Fetches stations near `coords`. Results are cached for STATION_CACHE_MS to
    * avoid re-querying on every map pan; pass `force` to bypass that.
+   *
+   * The reentrancy guard below only blocks a second CACHED call while one is
+   * already in flight -- a `force` call (e.g. pull-to-refresh) always proceeds,
+   * so a screen driving its own local `refreshing` flag with try/finally never
+   * gets stuck waiting on a fetch that was silently dropped.
    */
   fetchNearby: async (coords, force = false) => {
     const { lastFetchedAt, isLoading } = get();
 
-    if (isLoading) return;
+    if (isLoading && !force) return;
     if (
       !force &&
       lastFetchedAt !== null &&

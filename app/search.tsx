@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StationCard } from "@/components/station/StationCard";
 import { COLORS } from "@/constants/colors";
 import { STORAGE_KEYS } from "@/constants/config";
+import { getCurrentCoords } from "@/lib/location";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
 
@@ -17,8 +18,10 @@ export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [recent, setRecent] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const stations = useStationStore((state) => state.stations);
+  const fetchNearby = useStationStore((state) => state.fetchNearby);
   const { ids: favoriteIds, load: loadFavorites, toggle } = useFavoriteStore();
 
   useEffect(() => {
@@ -74,6 +77,16 @@ export default function SearchScreen() {
   const openStation = (id: string): void => {
     rememberTerm(query);
     router.push({ pathname: "/station/[id]", params: { id } });
+  };
+
+  const refresh = async (): Promise<void> => {
+    setRefreshing(true);
+    try {
+      const fix = await getCurrentCoords();
+      await fetchNearby(fix.coords, true);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -161,6 +174,8 @@ export default function SearchScreen() {
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-6 pb-8 gap-3"
           keyboardShouldPersistTaps="handled"
+          refreshing={refreshing}
+          onRefresh={refresh}
           ListEmptyComponent={
             <View className="items-center px-6 py-12">
               <Text className="text-center font-semibold text-body text-ink">

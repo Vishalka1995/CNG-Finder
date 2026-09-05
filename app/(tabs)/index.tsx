@@ -83,13 +83,24 @@ export default function MapScreen() {
         onSelectStation={setSelectedId}
       />
 
-      {/* Header pill */}
+      {/* Header pill -- a map has no scroll gesture to hook a pull-to-refresh
+          into, so the station count doubles as a tap target for a manual
+          refresh instead. */}
       <SafeAreaView className="absolute left-0 right-0 top-0" edges={["top"]}>
         <View className="mx-4 mt-2 flex-row items-center justify-between rounded-2xl bg-white px-4 py-3 shadow">
           <Text className="font-bold text-heading text-ink">CNG Now</Text>
-          <Text className="font-sans text-label text-muted">
-            {isLoading ? "Updating…" : `${stations.length} nearby`}
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Refresh nearby stations"
+            disabled={isLoading}
+            onPress={() => void fetchNearby(center, true)}
+            hitSlop={8}
+            className="active:opacity-60"
+          >
+            <Text className="font-sans text-label text-muted">
+              {isLoading ? "Updating…" : `${stations.length} nearby · tap to refresh`}
+            </Text>
+          </Pressable>
         </View>
 
         {isDemo ? (

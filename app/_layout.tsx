@@ -19,6 +19,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 
+import { Toast } from "@/components/ui/Toast";
 import { STORAGE_KEYS } from "@/constants/config";
 import { ensureSession } from "@/lib/device";
 
@@ -104,6 +105,7 @@ export default function RootLayout() {
             options={{ presentation: "modal" }}
           />
         </Stack>
+        <Toast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

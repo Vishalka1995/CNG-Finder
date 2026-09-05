@@ -1,23 +1,38 @@
 import { useRouter } from "expo-router";
 import { Heart } from "lucide-react-native";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StationCard } from "@/components/station/StationCard";
 import { COLORS } from "@/constants/colors";
+import { getCurrentCoords } from "@/lib/location";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
 
   const stations = useStationStore((state) => state.stations);
+  const fetchNearby = useStationStore((state) => state.fetchNearby);
   const { ids: favoriteIds, isLoaded, load, toggle } = useFavoriteStore();
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Favourites are derived from the shared station list, so pulling here
+  // refreshes the same underlying data the map and list screens show.
+  const refresh = async (): Promise<void> => {
+    setRefreshing(true);
+    try {
+      const fix = await getCurrentCoords();
+      await fetchNearby(fix.coords, true);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Favourites are ids; resolve them against the loaded station list so the
   // cards show live status. Ordered by the nearby list, i.e. by distance.
@@ -52,6 +67,8 @@ export default function FavoritesScreen() {
           data={favorites}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-6 pb-8 gap-3"
+          refreshing={refreshing}
+          onRefresh={refresh}
           ListFooterComponent={
             missingCount > 0 ? (
               <Text className="mt-4 text-center font-sans text-label text-muted">
