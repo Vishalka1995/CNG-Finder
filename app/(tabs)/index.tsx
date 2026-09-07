@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ChevronRight, Search } from "lucide-react-native";
+import { ChevronRight, Plus, Search } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -146,7 +146,30 @@ export default function MapScreen() {
           <Text className="mt-1 font-sans text-caption text-muted">
             We could not find CNG stations within 10 km of you.
           </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push("/add-station")}
+            className="mt-3 min-h-[44px] items-center justify-center rounded-xl bg-primary active:opacity-80"
+          >
+            <Text className="font-semibold text-caption text-white">
+              Add a station you know
+            </Text>
+          </Pressable>
         </View>
+      ) : null}
+
+      {/* Add-a-station button, shown whenever the preview card is not up so the
+          two never overlap at the bottom of the screen. */}
+      {!selected && stations.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add a missing station"
+          onPress={() => router.push("/add-station")}
+          className="absolute bottom-6 right-4 h-14 flex-row items-center rounded-full bg-primary px-5 shadow-lg active:opacity-80"
+        >
+          <Plus color="#FFFFFF" size={20} />
+          <Text className="ml-2 font-semibold text-caption text-white">Add station</Text>
+        </Pressable>
       ) : null}
 
       {/* Selected station preview -- becomes a draggable sheet in Phase 2 */}

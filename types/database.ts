@@ -78,6 +78,37 @@ export type FavoriteRow = {
   created_at: string;
 }
 
+export type SubmissionStatus = "pending" | "approved" | "rejected";
+
+export type StationSubmissionRow = {
+  id: string;
+  auth_user_id: string;
+  device_id: string | null;
+  name: string;
+  operator: string | null;
+  address: string | null;
+  note: string | null;
+  status: SubmissionStatus;
+  reviewed_at: string | null;
+  review_note: string | null;
+  station_id: string | null;
+  created_at: string;
+};
+
+/**
+ * Payload for submitting a station. The server overwrites auth_user_id and
+ * forces status to 'pending', so neither is settable here.
+ */
+export type StationSubmissionInsert = {
+  name: string;
+  operator?: string | null;
+  address?: string | null;
+  note?: string | null;
+  device_id?: string | null;
+  /** WKT point, built with toPointWKT(). */
+  location: string;
+};
+
 /** Payload for inserting a report. Server overwrites auth_user_id and distance_m. */
 export type ReportInsert = {
   station_id: string;
@@ -135,6 +166,14 @@ export interface Database {
         };
         Insert: ReportInsert;
         // Append-only: the database has no UPDATE policy on reports.
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Update: {};
+        Relationships: [];
+      };
+      station_submissions: {
+        Row: StationSubmissionRow;
+        Insert: StationSubmissionInsert;
+        // Moderation happens with the service role, never from the app.
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         Update: {};
         Relationships: [];

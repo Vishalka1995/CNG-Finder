@@ -60,6 +60,36 @@ export function parseReportError(message: string | undefined): ReportErrorCode {
   return codes.find((code) => message.includes(code)) ?? "UNKNOWN";
 }
 
+/** Error codes raised by the `enforce_submission_rules` trigger. */
+export type SubmissionErrorCode =
+  | "AUTH_REQUIRED"
+  | "ALREADY_EXISTS"
+  | "ALREADY_SUBMITTED"
+  | "RATE_LIMITED"
+  | "UNKNOWN";
+
+export function parseSubmissionError(
+  message: string | undefined,
+): SubmissionErrorCode {
+  if (!message) return "UNKNOWN";
+  const codes: SubmissionErrorCode[] = [
+    "AUTH_REQUIRED",
+    "ALREADY_EXISTS",
+    "ALREADY_SUBMITTED",
+    "RATE_LIMITED",
+  ];
+  return codes.find((code) => message.includes(code)) ?? "UNKNOWN";
+}
+
+/**
+ * The `ALREADY_EXISTS` message embeds the conflicting station's name, which is
+ * far more useful to show than a generic "already listed". Pulls it back out.
+ */
+export function existingStationName(message: string | undefined): string | null {
+  const match = /ALREADY_EXISTS:\s*(.+?)\s+is already listed here/.exec(message ?? "");
+  return match?.[1] ?? null;
+}
+
 /** Builds the WKT literal PostGIS expects for a geography(Point, 4326) column. */
 export function toPointWKT(longitude: number, latitude: number): string {
   // WKT is POINT(longitude latitude) -- longitude first, same as ST_MakePoint.

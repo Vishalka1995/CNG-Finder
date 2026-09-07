@@ -62,7 +62,8 @@
     "stations:import": "node scripts/import-stations.mjs",
     "stations:commit": "node scripts/import-stations.mjs --commit",
     "stations:review": "node scripts/review-stations.mjs",
-    "stations:gail": "node scripts/fetch-gail-stations.mjs"
+    "stations:gail": "node scripts/fetch-gail-stations.mjs",
+    "submissions": "node scripts/review-submissions.mjs"
   },
   "overrides": {
     "tailwindcss": "3.4.17"
