@@ -144,7 +144,7 @@ export default function MapScreen() {
         <View className="absolute bottom-6 left-4 right-4 rounded-2xl bg-white p-4 shadow">
           <Text className="font-semibold text-body text-ink">No stations nearby</Text>
           <Text className="mt-1 font-sans text-caption text-muted">
-            We could not find CNG stations within 10 km of you.
+            We could not find CNG stations within 30 km of you.
           </Text>
           <Pressable
             accessibilityRole="button"

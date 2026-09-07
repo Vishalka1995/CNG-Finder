@@ -133,7 +133,7 @@ export default function ListScreen() {
               </Text>
               <Text className="mt-2 text-center font-sans text-caption text-muted">
                 {filter === "all"
-                  ? "We could not find CNG stations within 10 km."
+                  ? "We could not find CNG stations within 30 km."
                   : "Try the All filter to see every nearby station."}
               </Text>
             </View>

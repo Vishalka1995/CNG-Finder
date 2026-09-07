@@ -16,8 +16,14 @@ export const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? "";
  */
 export const MAP_STYLE_URL = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
 
-/** Radius for the nearby_stations RPC. */
-export const NEARBY_RADIUS_M = 10_000;
+/**
+ * Radius for the nearby_stations RPC.
+ * 30km rather than the original 10km: the real Bengaluru station data (GAIL's
+ * official list) spans the whole gas-distribution area -- as far out as
+ * Doddaballapur and Hoskote -- not just the city core, so 10km left most
+ * stations invisible from anywhere in the city.
+ */
+export const NEARBY_RADIUS_M = 30_000;
 
 /**
  * Reporter must be within this distance of the station.
