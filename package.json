@@ -61,7 +61,8 @@
     "stations:fetch": "node scripts/fetch-osm-stations.mjs",
     "stations:import": "node scripts/import-stations.mjs",
     "stations:commit": "node scripts/import-stations.mjs --commit",
-    "stations:review": "node scripts/review-stations.mjs"
+    "stations:review": "node scripts/review-stations.mjs",
+    "stations:gail": "node scripts/fetch-gail-stations.mjs"
   },
   "overrides": {
     "tailwindcss": "3.4.17"

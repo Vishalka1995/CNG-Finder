@@ -1,0 +1,76 @@
+osm_id,name,operator,address,area,latitude,longitude,is_24x7,opening_hours,phone,needs_review
+gail/152,Prem Nagar-COCO (GAIL Gas Station),GAIL,"Pipeline Rd, KHBS Layout, Basaveshwar Nagar",,12.996347,77.519439,false,,,model:COCO
+gail/153,Jigani- COCO (GAIL Gas Station),GAIL,"Jigani, Karnataka 560105",,12.777706,77.643986,false,,,model:COCO
+gail/154,"Hardware Park-COCO, (GAIL Gas Station)",GAIL,"5M3PV38, Huvinayakanahalli, Bengaluru, Karnataka",,13.154778,77.685222,false,,,model:COCO
+gail/155,"Software Park-COCO (GAIL Gas Station) Plot No. AM-5, Gollahalli Village, Bengaluru - 562129",GAIL,,,13.153583,77.728889,false,,,model:COCO
+gail/156,ITI-I,GAIL,"Iti Gate, Malur - Byranahalli Rd, ITI Colony",,13.005083,77.685583,false,,,model:COCO
+gail/157,Hoskote - COCO (GAIL Gas Station),GAIL,"Sy. No. 85, P NO AM-2, Chokkahalli Village, Bengaluru",,13.121135,77.826930,false,,,model:COCO
+gail/158,COCO Attibele,GAIL,"Utility-1, S.No. 44&45, KIADB Industrail Area Attibele",,12.786181,77.742612,false,,,model:COCO
+gail/159,COCO KIADB Boomsandra,GAIL,"58,Yarandahali Village,Bommasandra Industrial",,12.812615,77.662200,false,,,model:COCO
+gail/160,COCO Harappanahalli,GAIL,"Bannerghatta Main Road, Anekal, Taluka/Tehsil",,12.988770,77.685840,false,,,model:COCO
+gail/161,COCO ITI-2 (Ramamurthynagar),GAIL,"Bangalore,Bangalore East, Taluka/Tehsil : Bangalore",,13.011520,77.683850,false,,,model:COCO
+gail/162,CPIL 133 ( Jalahalli),GAIL,"Bangalore North Taluk, Bangalore - 560013",,13.066490,77.546040,false,,,model:FDODO
+gail/163,CPIL 130 (Kanakpura),GAIL,"South, Taluka: Bangalore South",,12.889910,77.554540,false,,,model:FDODO
+gail/164,CPIL 96(Harohalli),GAIL,"Vishwaneedham Post, Bengaluru-560091, Bangalore",,12.990680,77.491260,false,,,model:FDODO
+gail/165,CPIL -33 Lalbagh,GAIL,"Plot No. 184 Site No.184, Sri MN Krishna Rao Road",,12.958560,77.580650,false,,,model:FDODO
+gail/166,CPIL -55 KH Road,GAIL,"BBMP Khata No. 127, ""Harikrupa"", K.H. Road",,12.972420,77.593740,false,,,model:FDODO
+gail/167,CPIL -129 Peenya,GAIL,"Plot No. 164, 10th Main Road, 3rd Phase, Peenya",,13.031760,77.520890,false,,,model:FDODO
+gail/168,CPIL -127 Singhasandra,GAIL,"Khata No. 58/8/1, Hosur Main Road, Berethana",,12.875140,77.655110,false,,,model:FDODO
+gail/169,CPIL -147 Kothnur,GAIL,"Village,Uttarahalli Hobli, Ward No.194,Bengaluru",,12.882030,77.584130,false,,,model:FDODO
+gail/170,CPIL -64 Vijaynagar,GAIL,"Plot No.27,10A Cross, Kempegowda Layout, Govindaraj",,12.977720,77.531550,false,,,model:FDODO
+gail/171,CPIL -105 Jakkasandra,GAIL,"Plot No.166 & Plot No. 171/1,1st Block Koramangala",,12.908320,77.637190,false,,,model:FDODO
+gail/172,CPIL -303 JP Nagar,GAIL,"Khata No.613/A,15th Cross,6th Phase,J.P Nagar,Ward",,12.906250,77.575610,false,,,model:FDODO
+gail/173,CPIL -81 Kengeri,GAIL,"4/A, Nagadevanahalli Village,Kengeri Hobli, Bengaluru",,12.952090,77.490670,false,,,model:FDODO
+gail/174,CPIL -237 Pattanagere,GAIL,"No.58/57/8/11,Pattanagere,Hemmigepura Ward",,12.909020,77.512520,false,,,model:FDODO
+gail/175,CPIL -419 Peenya -2,GAIL,"Hobli, Bangalore North Taluk, Bengaluru",,13.037028,77.517972,false,,,model:FDODO
+gail/176,CPIL -306 Alahalli,GAIL,"Khata No. 140/1442/IC/3/3/891 , BBMP Khata No.",,12.873528,77.566694,false,,,model:FDODO
+gail/177,CPIL-532 BTM Layout,GAIL,"SY.NO.28,BBMP KHATA NO.917,NYANAPPANAHALLI",,12.884167,77.610250,false,,,model:FDODO
+gail/178,IOCL Abhimaani,IOCL,"3rd Main Rd, Shivapura, Peenya, Bengaluru, Karnataka",,13.023430,77.509900,false,,,model:OMC RO
+gail/179,IOCL Padma Priya,IOCL,"No. 267/6, No.97, Katha, 1, Marathahalli - Sarjapur Rd",,12.924780,77.650410,false,,,model:OMC RO
+gail/180,IOCL Fuel Zone,IOCL,"Cars, Yelahanka, Bharti Nagar, Hunasamaranahalli",,13.140530,77.617960,false,,,model:OMC RO
+gail/181,IOCL Shakthi Ganapathi,IOCL,"27, Kattigenahalli, Bengaluru, Karnataka 560064",,13.119070,77.632830,false,,,model:OMC RO
+gail/182,IOCL Shree Hari (D),IOCL,"Virupakshapura, Vidyaranyapura PO, Bangalore Urban",,13.065180,77.570920,false,,,model:OMC RO
+gail/183,IOCL Sanjeevanagara (D),IOCL,"Bennergatta Road,SH 87, Bengaluru, Karnataka 560083",,12.827700,77.586590,false,,,model:OMC RO
+gail/184,IOCL Ranjith (D),IOCL,"Attibele Road, Haldenahalli, Anekal, Karnataka 562106",,12.713470,77.705060,false,,,model:OMC RO
+gail/185,IOCL Sai Sharada Krishna (D),IOCL,"39/2, HIghway 9, Honnenahalli, Bengaluru, Karnataka",,13.157790,77.566740,false,,,model:OMC RO
+gail/186,IOCL Vijayalakshmi,IOCL,"Survey No. 22/4, Srinivaspura Village, Doddaballapura",,13.300610,77.520640,false,,,model:OMC RO
+gail/187,IOCL Shree Durga Enterprises,IOCL,"Sy No:103, Hoskote Village, Old Madras Road",,13.077750,77.796070,false,,,model:OMC RO
+gail/188,IOCL Sri Jagadmba,IOCL,"Survey No.191, Kurubarahalli, Magadi Main Road",,12.969010,77.407290,false,,,model:OMC RO
+gail/189,IOCL Suryaputhra Petro Station,IOCL,"Sy No 15 & 16, Pantharapalya Ring Road, Kengeri",,12.944420,77.529470,false,,,model:OMC RO
+gail/190,IOCL Srigandha Service Station,IOCL,"NH4 Near Sondekoppa circle, Bengaluru, Karnataka",,13.093190,77.392000,false,,,model:OMC RO
+gail/191,IOCL DVR & Sons Petrol Pump,IOCL,"SY No. 73/4, Heggondanahalli Village, Anekal Taluk",,12.903710,77.746720,false,,,model:OMC RO
+gail/192,IOCL Nisarga Service Station,IOCL,"Sy No. 116/1, Yelachahalli Village, Nandagudi Hobli",,13.126530,77.906150,false,,,model:OMC RO
+gail/193,IOCL Bettegowda Service station,IOCL,"Suradhenupura, Karnataka 562157",,13.215370,77.552910,false,,,model:OMC RO
+gail/194,IOCL Rajarajeshwari,IOCL,"Nelamangala, Taluka: Nelamangala",,13.115680,77.373060,false,,,model:OMC RO
+gail/195,IOCL Sri Lakshmi Venkateshwara,IOCL,"Bidarahalli Hobli, Bangalore, Taluka:Bangalore East",,13.041860,77.760840,false,,,model:OMC RO
+gail/196,IOCL Matha Service Station,IOCL,"Road, Kengeri Hobli, Patnagere, Bangalore South",,12.924460,77.499110,false,,,model:OMC RO
+gail/197,IOCL KFCSC Station,IOCL,"Bangalore South, Taluka: Bangalore South,District:",,12.918970,77.570750,false,,,model:OMC RO
+gail/198,IOCL COCO KR PURAM 2,IOCL,"Road,Bangalore North, Taluka/Tehsil : Bangalore",,12.988770,77.685840,false,,,model:OMC RO
+gail/199,HPCL R P Enterprises (D),HPCL,"12, Doddakannelli Varthur Hobli, 83, Off Sarjapur Road",,12.909710,77.687810,false,,,model:OMC RO
+gail/200,HPCL Chowdeshwari (D),HPCL,"152/1B, Devanahalli Village, Dooravaninagara PO, KR",,13.257390,77.717100,false,,,model:OMC RO
+gail/201,IOCL A M Samyulla,HPCL,"Teachers Colony, Chikkabidarakallu, Bengaluru",,13.051490,77.488280,false,,,model:OMC RO
+gail/202,HPCL Havish Petroleum (D),HPCL,"Survey No. 196/2, SARJAPUR VILLAGE, Anekal",,12.884000,77.749120,false,,,model:OMC RO
+gail/203,HPCL H. Anjanappa & son's fuel,HPCL,"126/2B1, Arishinakunte, Kasaba Hobli, Nelamangala",,13.085730,77.415330,false,,,model:OMC RO
+gail/204,HPCL Janardhan Service Station,HPCL,"Samethanahalli Kadugodi, Cross, Thirumalashettyhally",,12.985960,77.780630,false,,,model:OMC RO
+gail/205,HPCL MTB Fuel station,HPCL,"4, Rifco Shantiniketan Layout, Hosabasavanapura",,13.022480,77.714220,false,,,model:OMC RO
+gail/206,HPCL Maruthi Service station,HPCL,"Mysore Road, Bengaluru, Karnataka 560060",,12.898650,77.464550,false,,,model:OMC RO
+gail/207,HPCL Carrs Enterprise,HPCL,"Bagalur Main Rd, Kannuru, Bengaluru, Karnataka",,13.105300,77.660770,false,,,model:OMC RO
+gail/208,HPCL CBW Enterprises,HPCL,"Thirumenahalli, Taluka: Bangalore North",,13.095985,77.614775,false,,,model:OMC RO
+gail/209,HPCL Pragathi Fuel Station,HPCL,"Hobli, Devanahalli Taluk, Bangalore,Handarahalli",,13.126660,77.744200,false,,,model:OMC RO
+gail/210,HPCL Bhyraweshwara RO,HPCL,"Agrahara Dasarahalli, Kamakshipalya, Bengaluru",,12.990680,77.468910,false,,,model:OMC RO
+gail/211,HPCL Sai Ranganath (Kechanahalli),HPCL,"Bangalore South, Taluka/Tehsil : Bangalore North",,12.929670,77.504410,false,,,model:OMC RO
+gail/212,HPCL Sri Sai Venkata Fuel Park,HPCL,"Hobli, Mathkur, Hosakote, Taluka:",,12.948350,77.797450,false,,,model:OMC RO
+gail/213,HPCL Parvathi Paramashiva,HPCL,"Devanahalli, Taluka: Devanahalli, District:",,13.137740,77.744520,false,,,model:OMC RO
+gail/214,HPCL Mahalakshmi Service Station,HPCL,"Kengeri Hobli, Kumbalagudu, Bangalore South, Taluka:",,12.889380,77.437900,false,,,model:OMC RO
+gail/215,HPCL Sree Chowdeshwari Fuel Station,HPCL,"village, Bangalore",,12.870580,77.438840,false,,,model:OMC RO
+gail/216,HPCL MF Fuels,HPCL,"Village,Hesaraghatta Hobli, Kodigethirumalapura",,13.121300,77.483270,false,,,model:OMC RO
+gail/217,BPCL Valsala,BPCL,"Extension, Srigandadakaval, Bengaluru, Karnataka",,12.988660,77.510950,false,,,model:OMC RO
+gail/218,BPCL Seetha,BPCL,"Bommasandra Industrial Area, Bengaluru, Karnataka",,12.810060,77.665180,false,,,model:OMC RO
+gail/219,BPCL Arunodaya (D),BPCL,"No 54/1 & 2, Tatanagar, Kodigehalli main road",,13.051630,77.575050,false,,,model:OMC RO
+gail/220,BPCL Fleet Linc (D),BPCL,"Sy No 84 Kadabagere Cross, Dasanapura, Machohalli",,12.988630,77.448200,false,,,model:OMC RO
+gail/221,BPCL Shankara Service Station,BPCL,"Survey No 116 Singanayakanahalli, Avalahalli",,13.136890,77.568530,false,,,model:OMC RO
+gail/222,BPCL Adhitya Service Station,BPCL,"Survey-No. 128/1 (Part), Ueshwanthpura Hobli",,12.985890,77.479150,false,,,model:OMC RO
+gail/223,BPCL Sri Ranga Fuel Station,BPCL,"Hobli,Nelamangala Taluk, T Begur, Nelamangala",,13.147740,77.339070,false,,,model:OMC RO
+gail/224,BPCL SMS Enterprises,BPCL,"Village Dod Ballapur, Taluka: Dod Ballapur",,13.309890,77.487680,false,,,model:OMC RO
+gail/225,BPCL Saklaspur Enterprises,BPCL,"UrbanVillage Bommasandra Industrial Area, Anekal",,12.804400,77.687450,false,,,model:OMC RO
+gail/226,Devanhalli - RBPML,RBPML,"Hobli, Banhalore North Additional TQ, Bengaluru",,13.168900,77.625120,false,,,model:OMC RO

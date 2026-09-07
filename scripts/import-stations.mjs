@@ -34,8 +34,14 @@ const CSV_PATH =
     ? process.argv[fileArgIndex + 1]
     : "data/stations-draft.csv";
 
-/** Bangalore bounding box, used to catch transposed or mistyped coordinates. */
-const BOUNDS = { south: 12.7, west: 77.3, north: 13.2, east: 77.9 };
+/**
+ * Greater Bengaluru bounding box, used to catch transposed or mistyped
+ * coordinates. Deliberately wider than the city proper: GAIL's licensed
+ * Geographical Area reaches Doddaballapur and Nandi Hills in the north
+ * (~13.31 N) and past Hoskote in the east (~77.91 E), and those are real
+ * operational stations a driver could legitimately be at.
+ */
+const BOUNDS = { south: 12.6, west: 77.2, north: 13.4, east: 78.0 };
 
 /** Minimal .env parser -- avoids a dependency for four lines of work. */
 async function loadEnv() {
