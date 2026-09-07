@@ -22,6 +22,14 @@ import type { NearbyStation } from "@/types/database";
 const LAYER_STATIONS = "station-points";
 const LAYER_CLUSTERS = "station-clusters";
 
+/**
+ * Street-level zoom flown to when a single station is tapped. Above both
+ * DEFAULT_ZOOM (12) and clusterMaxZoom (14), so tapping a station always zooms
+ * in further. A fixed target rather than "current zoom + N": reading the
+ * current zoom back would need an async query, adding latency to the tap.
+ */
+const STATION_TAP_ZOOM = 16;
+
 interface StationMapProps {
   stations: NearbyStation[];
   center: Coords;
@@ -79,25 +87,34 @@ export function StationMap({
    * trip is needed.
    *
    * A tapped feature is either a single station (has an `id`) or a cluster
-   * bubble (has `cluster_id` + `point_count` instead). Tapping a cluster must
-   * zoom the camera in -- supercluster (which backs GeoJSONSource clustering)
-   * does not do this on its own; the exact zoom level that will split this
-   * specific cluster apart has to be asked for via getClusterExpansionZoom.
+   * bubble (has `cluster_id` + `point_count` instead).
+   *
+   * Tapping a cluster zooms to whatever level splits that specific cluster
+   * apart, via getClusterExpansionZoom -- supercluster (which backs
+   * GeoJSONSource clustering) does not do this on its own. Tapping a single
+   * station flies to a fixed street-level zoom instead: there is no
+   * "expansion zoom" for a station, but centring and zooming in on it makes
+   * the tapped pin visually prominent before the info card appears.
    */
   const handleSourcePress = async (
     event: NativeSyntheticEvent<PressEventWithFeatures>,
   ): Promise<void> => {
     const feature = event.nativeEvent.features[0];
-    if (!feature) return;
+    if (!feature || feature.geometry.type !== "Point") return;
 
     const stationId = feature.properties?.["id"];
     if (typeof stationId === "string") {
+      cameraRef.current?.flyTo({
+        center: feature.geometry.coordinates as [number, number],
+        zoom: STATION_TAP_ZOOM,
+        duration: 500,
+      });
       onSelectStation(stationId);
       return;
     }
 
     const clusterId = feature.properties?.["cluster_id"];
-    if (typeof clusterId !== "number" || feature.geometry.type !== "Point") return;
+    if (typeof clusterId !== "number") return;
 
     const zoom = await sourceRef.current?.getClusterExpansionZoom(clusterId);
     if (zoom === undefined) return;
