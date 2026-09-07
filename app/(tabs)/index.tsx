@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Search } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -83,12 +83,25 @@ export default function MapScreen() {
         onSelectStation={setSelectedId}
       />
 
-      {/* Header pill -- a map has no scroll gesture to hook a pull-to-refresh
-          into, so the station count doubles as a tap target for a manual
-          refresh instead. */}
+      {/* Header. A map has no scroll gesture to hook pull-to-refresh into, so
+          the station count doubles as a manual refresh target. Search sits
+          here rather than only on the List tab, since this is the screen
+          people actually start on. */}
       <SafeAreaView className="absolute left-0 right-0 top-0" edges={["top"]}>
-        <View className="mx-4 mt-2 flex-row items-center justify-between rounded-2xl bg-white px-4 py-3 shadow">
-          <Text className="font-bold text-heading text-ink">CNG Now</Text>
+        <Pressable
+          accessibilityRole="search"
+          accessibilityLabel="Search CNG stations"
+          onPress={() => router.push("/search")}
+          className="mx-4 mt-2 flex-row items-center rounded-2xl bg-white px-4 py-3 shadow active:opacity-70"
+        >
+          <Search color={COLORS.muted} size={18} />
+          <Text className="ml-3 flex-1 font-sans text-body text-muted">
+            Search CNG stations
+          </Text>
+        </Pressable>
+
+        <View className="mx-4 mt-2 flex-row items-center justify-between rounded-2xl bg-white px-4 py-2 shadow">
+          <Text className="font-semibold text-caption text-ink">CNG Now</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Refresh nearby stations"

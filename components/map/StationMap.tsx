@@ -4,6 +4,8 @@ import {
   Layer,
   Map,
   UserLocation,
+  type CameraRef,
+  type GeoJSONSourceRef,
   type MapRef,
   type PressEventWithFeatures,
 } from "@maplibre/maplibre-react-native";
@@ -43,6 +45,8 @@ export function StationMap({
   onSelectStation,
 }: StationMapProps) {
   const mapRef = useRef<MapRef>(null);
+  const cameraRef = useRef<CameraRef>(null);
+  const sourceRef = useRef<GeoJSONSourceRef>(null);
 
   const collection = useMemo<FeatureCollection<Point>>(
     () => ({
@@ -72,12 +76,37 @@ export function StationMap({
   /**
    * GeoJSONSource's own onPress fires with the tapped features already
    * attached (`event.nativeEvent.features`), so no separate pixel-query round
-   * trip is needed. Cluster taps have no `id` property (only `point_count`),
-   * so they fall through and the user zooms in instead.
+   * trip is needed.
+   *
+   * A tapped feature is either a single station (has an `id`) or a cluster
+   * bubble (has `cluster_id` + `point_count` instead). Tapping a cluster must
+   * zoom the camera in -- supercluster (which backs GeoJSONSource clustering)
+   * does not do this on its own; the exact zoom level that will split this
+   * specific cluster apart has to be asked for via getClusterExpansionZoom.
    */
-  const handleSourcePress = (event: NativeSyntheticEvent<PressEventWithFeatures>): void => {
-    const stationId = event.nativeEvent.features[0]?.properties?.["id"];
-    if (typeof stationId === "string") onSelectStation(stationId);
+  const handleSourcePress = async (
+    event: NativeSyntheticEvent<PressEventWithFeatures>,
+  ): Promise<void> => {
+    const feature = event.nativeEvent.features[0];
+    if (!feature) return;
+
+    const stationId = feature.properties?.["id"];
+    if (typeof stationId === "string") {
+      onSelectStation(stationId);
+      return;
+    }
+
+    const clusterId = feature.properties?.["cluster_id"];
+    if (typeof clusterId !== "number" || feature.geometry.type !== "Point") return;
+
+    const zoom = await sourceRef.current?.getClusterExpansionZoom(clusterId);
+    if (zoom === undefined) return;
+
+    cameraRef.current?.flyTo({
+      center: feature.geometry.coordinates as [number, number],
+      zoom,
+      duration: 500,
+    });
   };
 
   return (
@@ -89,6 +118,7 @@ export function StationMap({
       attributionPosition={{ bottom: 8, right: 8 }}
     >
       <Camera
+        ref={cameraRef}
         initialViewState={{
           center: [center.longitude, center.latitude],
           zoom: DEFAULT_ZOOM,
@@ -98,6 +128,7 @@ export function StationMap({
       {showUserLocation ? <UserLocation animated /> : null}
 
       <GeoJSONSource
+        ref={sourceRef}
         id="stations"
         data={collection}
         cluster
