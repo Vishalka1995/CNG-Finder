@@ -5,9 +5,11 @@ import {
   Map,
   UserLocation,
   type MapRef,
+  type PressEventWithFeatures,
 } from "@maplibre/maplibre-react-native";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import { useMemo, useRef } from "react";
+import type { NativeSyntheticEvent } from "react-native";
 
 import { COLORS, STATUS_COLORS } from "@/constants/colors";
 import { DEFAULT_ZOOM, MAP_STYLE_URL } from "@/constants/config";
@@ -68,19 +70,13 @@ export function StationMap({
   );
 
   /**
-   * v11 has no per-source onPress, so hit-testing happens here: query the
-   * rendered features at the tapped pixel, restricted to our station layer.
-   * Cluster taps carry no station id and are ignored -- the user zooms instead.
+   * GeoJSONSource's own onPress fires with the tapped features already
+   * attached (`event.nativeEvent.features`), so no separate pixel-query round
+   * trip is needed. Cluster taps have no `id` property (only `point_count`),
+   * so they fall through and the user zooms in instead.
    */
-  const handlePress = async (event: {
-    nativeEvent: { point: [number, number] };
-  }): Promise<void> => {
-    const features = await mapRef.current?.queryRenderedFeatures(
-      event.nativeEvent.point,
-      { layers: [LAYER_STATIONS] },
-    );
-
-    const stationId = features?.[0]?.properties?.["id"];
+  const handleSourcePress = (event: NativeSyntheticEvent<PressEventWithFeatures>): void => {
+    const stationId = event.nativeEvent.features[0]?.properties?.["id"];
     if (typeof stationId === "string") onSelectStation(stationId);
   };
 
@@ -91,7 +87,6 @@ export function StationMap({
       mapStyle={MAP_STYLE_URL}
       logo={false}
       attributionPosition={{ bottom: 8, right: 8 }}
-      onPress={handlePress}
     >
       <Camera
         initialViewState={{
@@ -107,6 +102,7 @@ export function StationMap({
         data={collection}
         cluster
         clusterRadius={50}
+        onPress={handleSourcePress}
         clusterMaxZoom={14}
       >
         {/* Cluster bubbles: radius steps up with the number of stations. */}
