@@ -35,13 +35,34 @@ const CSV_PATH =
     : "data/stations-draft.csv";
 
 /**
- * Greater Bengaluru bounding box, used to catch transposed or mistyped
- * coordinates. Deliberately wider than the city proper: GAIL's licensed
- * Geographical Area reaches Doddaballapur and Nandi Hills in the north
- * (~13.31 N) and past Hoskote in the east (~77.91 E), and those are real
- * operational stations a driver could legitimately be at.
+ * Per-city bounding boxes, used to catch transposed or mistyped coordinates.
+ *
+ * Each box is deliberately drawn around the operator's licensed Geographical
+ * Area rather than the city limits, because stations at the edge of a GA are
+ * real places a driver could be standing:
+ *   - Bengaluru: GAIL's GA reaches Doddaballapur/Nandi Hills (~13.31 N) and
+ *     past Hoskote (~77.91 E).
+ *   - Kolhapur: HPOIL's GA runs down to Ajara (~16.13 N) and Uttur (~16.23 N)
+ *     in the southern talukas, which a city-sized box would silently drop.
  */
-const BOUNDS = { south: 12.6, west: 77.2, north: 13.4, east: 78.0 };
+const CITIES = {
+  bangalore: {
+    name: "Bangalore",
+    bounds: { south: 12.6, west: 77.2, north: 13.4, east: 78.0 },
+  },
+  kolhapur: {
+    name: "Kolhapur",
+    bounds: { south: 16.0, west: 73.8, north: 17.0, east: 74.7 },
+  },
+};
+
+const cityArg = (() => {
+  const index = process.argv.indexOf("--city");
+  return index !== -1 ? (process.argv[index + 1] ?? "") : "";
+})();
+
+const CITY = CITIES[cityArg.toLowerCase()] ?? CITIES.bangalore;
+const BOUNDS = CITY.bounds;
 
 /** Minimal .env parser -- avoids a dependency for four lines of work. */
 async function loadEnv() {
@@ -177,7 +198,7 @@ function validateRow(row, index) {
     longitude > BOUNDS.east
   ) {
     return {
-      error: `line ${line} (${name}): (${latitude}, ${longitude}) is outside Bangalore`,
+      error: `line ${line} (${name}): (${latitude}, ${longitude}) is outside ${CITY.name}`,
     };
   }
 
@@ -189,7 +210,7 @@ function validateRow(row, index) {
       name,
       address: (row.address ?? "").trim() || null,
       area: (row.area ?? "").trim() || null,
-      city: "Bangalore",
+      city: CITY.name,
       operator: (row.operator ?? "").trim() || null,
       is_24x7: String(row.is_24x7 ?? "").toLowerCase() === "true",
       phone: (row.phone ?? "").trim() || null,
@@ -222,6 +243,7 @@ async function upsertStation(env, station) {
     p_phone: station.phone,
     p_latitude: station.latitude,
     p_longitude: station.longitude,
+    p_city: station.city,
   };
 
   const { stdout } = await execFileAsync(
@@ -298,6 +320,7 @@ async function main() {
     [
       "",
       `Read ${rows.length} row(s) from ${CSV_PATH}`,
+      `  city       : ${CITY.name}${cityArg ? "" : "  (default -- pass --city to change)"}`,
       `  valid      : ${stations.length}`,
       `  rejected   : ${errors.length}`,
       `  duplicates : ${duplicates.length}`,
