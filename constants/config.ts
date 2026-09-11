@@ -10,11 +10,30 @@ export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
 export const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? "";
 
+export type MapStyleId = "streets" | "satellite";
+
 /**
- * Basemap style. Isolated in one constant so swapping MapTiler for OpenFreeMap
- * (no key, no session cap) is a one-line change if we hit the free-tier limit.
+ * Basemap styles. Isolated here so swapping MapTiler for OpenFreeMap (no key,
+ * no session cap) stays a small change if we ever hit the free-tier limit.
+ *
+ * Streets is the default: the core task is driving to a station, and satellite
+ * imagery hides street names and route numbers while making the red pins
+ * compete with rooftops and tarmac. Satellite earns its place as an option
+ * because it is the quickest way to check whether a pin actually sits on the
+ * forecourt -- a real problem in our data, not a hypothetical one.
+ *
+ * "satellite" maps to MapTiler's `hybrid`, not `satellite`: hybrid keeps road
+ * labels over the imagery, and losing those makes the map much harder to use.
  */
-export const MAP_STYLE_URL = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+export const MAP_STYLES: Record<MapStyleId, string> = {
+  streets: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+  satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`,
+};
+
+export const DEFAULT_MAP_STYLE: MapStyleId = "streets";
+
+/** @deprecated Prefer MAP_STYLES; kept so existing callers keep working. */
+export const MAP_STYLE_URL = MAP_STYLES.streets;
 
 /**
  * Radius for the nearby_stations RPC.

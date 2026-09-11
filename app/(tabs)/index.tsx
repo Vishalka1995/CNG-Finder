@@ -1,6 +1,6 @@
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { ChevronRight, Plus, Search } from "lucide-react-native";
+import { ChevronRight, Layers, Plus, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import {
   openDirections,
   type Coords,
 } from "@/lib/location";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 import { useStationStore } from "@/stores/stationStore";
 import type { NearbyStation } from "@/types/database";
 
@@ -38,6 +39,10 @@ export default function MapScreen() {
   const { stations, isLoading, error, isStale, isDemo, fetchNearby, loadCached } =
     useStationStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const mapStyle = usePreferencesStore((state) => state.mapStyle);
+  const setMapStyle = usePreferencesStore((state) => state.setMapStyle);
+  const loadPreferences = usePreferencesStore((state) => state.load);
 
   const sheetRef = useRef<BottomSheet>(null);
 
@@ -68,7 +73,7 @@ export default function MapScreen() {
     let cancelled = false;
 
     const init = async (): Promise<void> => {
-      await loadCached();
+      await Promise.all([loadCached(), loadPreferences()]);
       const result = await getCurrentCoords();
       if (cancelled) return;
 
@@ -82,7 +87,7 @@ export default function MapScreen() {
     return () => {
       cancelled = true;
     };
-  }, [fetchNearby, loadCached]);
+  }, [fetchNearby, loadCached, loadPreferences]);
 
   // Tapping a pin expands the sheet so the highlighted row is actually visible.
   useEffect(() => {
@@ -141,7 +146,25 @@ export default function MapScreen() {
         center={center}
         showUserLocation={hasLocation}
         onSelectStation={setSelectedId}
+        mapStyle={mapStyle}
       />
+
+      {/* Basemap toggle. Sits against the right edge below the header, clear of
+          both the header rows and the sheet at its tallest snap point. */}
+      <SafeAreaView className="absolute right-4 top-0" edges={["top"]} pointerEvents="box-none">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            mapStyle === "satellite" ? "Switch to street map" : "Switch to satellite"
+          }
+          onPress={() =>
+            void setMapStyle(mapStyle === "satellite" ? "streets" : "satellite")
+          }
+          className="mt-[120px] h-11 w-11 items-center justify-center rounded-xl bg-white shadow active:opacity-70"
+        >
+          <Layers color={mapStyle === "satellite" ? COLORS.primary : COLORS.ink} size={20} />
+        </Pressable>
+      </SafeAreaView>
 
       {/* Header. A map has no scroll gesture to hook pull-to-refresh into, so
           the station count doubles as a manual refresh target. "Add station"

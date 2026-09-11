@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 
+import type { MapStyleId } from "@/constants/config";
 import { formatDistance } from "@/lib/location";
 import type { Coords } from "@/lib/location";
 import type { NearbyStation } from "@/types/database";
@@ -9,6 +10,8 @@ interface StationMapProps {
   center: Coords;
   showUserLocation: boolean;
   onSelectStation: (stationId: string) => void;
+  /** Accepted to match the native component's props; unused in this stub. */
+  mapStyle?: MapStyleId;
 }
 
 /**

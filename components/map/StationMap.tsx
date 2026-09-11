@@ -14,7 +14,7 @@ import { useMemo, useRef } from "react";
 import type { NativeSyntheticEvent } from "react-native";
 
 import { MAP_PIN_COLOR } from "@/constants/colors";
-import { DEFAULT_ZOOM, MAP_STYLE_URL } from "@/constants/config";
+import { DEFAULT_ZOOM, MAP_STYLES, type MapStyleId } from "@/constants/config";
 import type { Coords } from "@/lib/location";
 import type { NearbyStation } from "@/types/database";
 
@@ -57,6 +57,7 @@ interface StationMapProps {
   center: Coords;
   showUserLocation: boolean;
   onSelectStation: (stationId: string) => void;
+  mapStyle?: MapStyleId;
 }
 
 /**
@@ -75,9 +76,12 @@ export function StationMap({
   center,
   showUserLocation,
   onSelectStation,
+  mapStyle = "streets",
 }: StationMapProps) {
   const cameraRef = useRef<CameraRef>(null);
   const sourceRef = useRef<GeoJSONSourceRef>(null);
+
+  const isSatellite = mapStyle === "satellite";
 
   const collection = useMemo<FeatureCollection<Point>>(
     () => ({
@@ -140,7 +144,7 @@ export function StationMap({
   return (
     <Map
       style={{ flex: 1 }}
-      mapStyle={MAP_STYLE_URL}
+      mapStyle={MAP_STYLES[mapStyle]}
       logo={false}
       attributionPosition={{ bottom: 8, right: 8 }}
     >
@@ -226,9 +230,11 @@ export function StationMap({
           }}
           paint={{
             "icon-color": "#FFFFFF",
-            "text-color": "#0F172A",
-            "text-halo-color": "#FFFFFF",
-            "text-halo-width": 1.2,
+            // Inverted over satellite: dark text on a white halo is right for
+            // the light street basemap, but unreadable against imagery.
+            "text-color": isSatellite ? "#FFFFFF" : "#0F172A",
+            "text-halo-color": isSatellite ? "#000000" : "#FFFFFF",
+            "text-halo-width": isSatellite ? 1.6 : 1.2,
           }}
         />
       </GeoJSONSource>
