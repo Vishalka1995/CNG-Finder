@@ -6,32 +6,45 @@ import {
   Map,
   UserLocation,
   type CameraRef,
+  type GeoJSONSourceRef,
   type PressEventWithFeatures,
 } from "@maplibre/maplibre-react-native";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import { useMemo, useRef } from "react";
 import type { NativeSyntheticEvent } from "react-native";
 
-import { STATUS_COLORS } from "@/constants/colors";
+import { MAP_PIN_COLOR } from "@/constants/colors";
 import { DEFAULT_ZOOM, MAP_STYLE_URL } from "@/constants/config";
 import type { Coords } from "@/lib/location";
 import type { NearbyStation } from "@/types/database";
 
 const LAYER_STATIONS = "station-points";
 const LAYER_GLYPH = "station-glyph";
+const LAYER_GROUPS = "station-groups";
+const LAYER_GROUP_GLYPH = "station-group-glyph";
 
 /**
- * Marker sizing, tuned to match Google Maps' place pins. The previous marker
- * drew the pump silhouette itself at ~45px tall, which dominated the map; a
- * ~22px disc reads as a map pin rather than an illustration.
+ * Marker sizing, tuned to match Google Maps' place pins -- a ~22px disc reads
+ * as a map pin rather than an illustration.
  */
 const MARKER_RADIUS = 11;
 
 /**
- * Glyph scale. The source image is 128px, so this renders it at ~13px --
- * sized to sit inside the disc above with a little breathing room.
+ * Grouped pins are drawn a touch larger. They carry no count badge (that read
+ * as clutter), so this slight size difference is the only hint that tapping
+ * will reveal more than one station.
  */
+const GROUP_RADIUS = 14;
+
+/** Glyph scale. The source image is 128px, so this renders it at ~13px. */
 const GLYPH_SIZE = 0.1;
+const GROUP_GLYPH_SIZE = 0.12;
+
+/** Below this zoom, pins close together collapse into one. */
+const GROUP_MAX_ZOOM = 13;
+
+/** Pixel radius within which pins are grouped. */
+const GROUP_RADIUS_PX = 44;
 
 /**
  * Street-level zoom flown to when a station is tapped. Above DEFAULT_ZOOM
@@ -49,17 +62,13 @@ interface StationMapProps {
 /**
  * The map.
  *
- * Every station gets its own pin -- no clustering into number bubbles -- with
- * a fuel-pump icon and its name labelled underneath, matching how Google Maps
- * shows a "nearest CNG station" search. Icon and label are one GeoJSON source
- * rendered as a single `symbol` layer, so 97+ stations is still one native
- * draw call rather than that many React-managed marker views.
+ * Pins are a single fixed red rather than status-coloured -- see MAP_PIN_COLOR
+ * for why. Status is surfaced wherever a station is named instead: the nearby
+ * sheet, the list, and the detail screen.
  *
- * The icon is a single SDF (signed-distance-field) asset: a white silhouette
- * on transparent background, tinted per-feature via `icon-color` in the paint
- * expression below -- the same mechanism `circle-color` used before, so a
- * station's marker recolours when its status changes without any React
- * re-render.
+ * Stations sitting close together collapse into one pin at low zoom and split
+ * apart as you zoom in, so a cluster of nearby stations does not render as a
+ * pile of overlapping discs. Grouped pins carry no count badge.
  */
 export function StationMap({
   stations,
@@ -68,6 +77,7 @@ export function StationMap({
   onSelectStation,
 }: StationMapProps) {
   const cameraRef = useRef<CameraRef>(null);
+  const sourceRef = useRef<GeoJSONSourceRef>(null);
 
   const collection = useMemo<FeatureCollection<Point>>(
     () => ({
@@ -83,10 +93,7 @@ export function StationMap({
           properties: {
             id: station.id,
             name: station.name,
-            // `status` is null when there are no recent reports; the style
-            // expression's fallback paints those grey.
             status: station.status ?? "unknown",
-            confidence: station.confidence,
           },
         }),
       ),
@@ -95,24 +102,39 @@ export function StationMap({
   );
 
   /**
-   * GeoJSONSource's own onPress fires with the tapped feature already attached
-   * (`event.nativeEvent.features`), so no separate pixel-query round trip is
-   * needed. Flies the camera to the tapped station before opening its info
-   * card, so the tapped pin becomes visually prominent.
+   * GeoJSONSource's own onPress delivers the tapped feature already attached.
+   *
+   * A tapped feature is either a station (has `id`) or a group (has
+   * `cluster_id`). Tapping a station flies to it and opens its info; tapping a
+   * group zooms to exactly the level that splits it apart, which supercluster
+   * computes for us -- it does not do this on its own.
    */
-  const handleSourcePress = (event: NativeSyntheticEvent<PressEventWithFeatures>): void => {
+  const handleSourcePress = async (
+    event: NativeSyntheticEvent<PressEventWithFeatures>,
+  ): Promise<void> => {
     const feature = event.nativeEvent.features[0];
     if (!feature || feature.geometry.type !== "Point") return;
 
-    const stationId = feature.properties?.["id"];
-    if (typeof stationId !== "string") return;
+    const coordinates = feature.geometry.coordinates as [number, number];
 
-    cameraRef.current?.flyTo({
-      center: feature.geometry.coordinates as [number, number],
-      zoom: STATION_TAP_ZOOM,
-      duration: 500,
-    });
-    onSelectStation(stationId);
+    const stationId = feature.properties?.["id"];
+    if (typeof stationId === "string") {
+      cameraRef.current?.flyTo({
+        center: coordinates,
+        zoom: STATION_TAP_ZOOM,
+        duration: 500,
+      });
+      onSelectStation(stationId);
+      return;
+    }
+
+    const clusterId = feature.properties?.["cluster_id"];
+    if (typeof clusterId !== "number") return;
+
+    const zoom = await sourceRef.current?.getClusterExpansionZoom(clusterId);
+    if (zoom === undefined) return;
+
+    cameraRef.current?.flyTo({ center: coordinates, zoom, duration: 500 });
   };
 
   return (
@@ -134,27 +156,51 @@ export function StationMap({
 
       <Images images={{ "fuel-pin": { source: require("@/assets/map/fuel-icon.png"), sdf: true } }} />
 
-      <GeoJSONSource id="stations" data={collection} onPress={handleSourcePress}>
-        {/* Google Maps-style marker: a small status-coloured disc with a white
-            glyph on top. Two layers rather than one tinted silhouette, because
-            a single SDF image can only be one colour -- the white-glyph-on-
-            colour look needs the colour to come from a shape underneath. */}
+      <GeoJSONSource
+        ref={sourceRef}
+        id="stations"
+        data={collection}
+        cluster
+        clusterRadius={GROUP_RADIUS_PX}
+        clusterMaxZoom={GROUP_MAX_ZOOM}
+        onPress={handleSourcePress}
+      >
+        {/* Grouped pins: same red disc and glyph as a single station, just
+            slightly larger. Deliberately no count badge. */}
+        <Layer
+          id={LAYER_GROUPS}
+          type="circle"
+          filter={["has", "point_count"]}
+          paint={{
+            "circle-radius": GROUP_RADIUS,
+            "circle-color": MAP_PIN_COLOR,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#FFFFFF",
+          }}
+        />
+
+        <Layer
+          id={LAYER_GROUP_GLYPH}
+          type="symbol"
+          filter={["has", "point_count"]}
+          layout={{
+            "icon-image": "fuel-pin",
+            "icon-size": GROUP_GLYPH_SIZE,
+            "icon-allow-overlap": true,
+          }}
+          paint={{ "icon-color": "#FFFFFF" }}
+        />
+
+        {/* Individual stations. Two layers because a single SDF image can only
+            be one colour; white-glyph-on-red needs the red to come from a
+            shape beneath it. */}
         <Layer
           id={LAYER_STATIONS}
           type="circle"
+          filter={["!", ["has", "point_count"]]}
           paint={{
             "circle-radius": MARKER_RADIUS,
-            "circle-color": [
-              "match",
-              ["get", "status"],
-              "available",
-              STATUS_COLORS.available,
-              "long_queue",
-              STATUS_COLORS.long_queue,
-              "not_available",
-              STATUS_COLORS.not_available,
-              STATUS_COLORS.unknown,
-            ],
+            "circle-color": MAP_PIN_COLOR,
             "circle-stroke-width": 2,
             "circle-stroke-color": "#FFFFFF",
           }}
@@ -163,6 +209,7 @@ export function StationMap({
         <Layer
           id={LAYER_GLYPH}
           type="symbol"
+          filter={["!", ["has", "point_count"]]}
           layout={{
             "icon-image": "fuel-pin",
             "icon-size": GLYPH_SIZE,

@@ -15,13 +15,30 @@ export const COLORS = {
   muted: "#64748B",
 } as const;
 
-/** Maps a station status to its marker / badge colour. */
+/**
+ * Maps a station status to its badge colour.
+ *
+ * Used by StatusBadge and the station rows -- NOT by the map. Map pins are a
+ * single fixed colour (MAP_PIN_COLOR below); see the note there.
+ */
 export const STATUS_COLORS = {
   available: COLORS.available,
   long_queue: COLORS.queue,
   not_available: COLORS.unavailable,
   unknown: COLORS.unknown,
 } as const;
+
+/**
+ * Map pin colour, matching the red Google Maps uses for fuel stations.
+ *
+ * Deliberately one colour for every pin rather than per-status. Status-coloured
+ * pins were tried first, but with crowd-sourced reporting most stations have no
+ * recent report at any given moment, so the map rendered as a field of grey --
+ * it read as broken rather than as "no data yet". A uniform, familiar pin makes
+ * the map legible; status is still shown wherever a station is named: the
+ * nearby sheet rows, the list, and the station detail screen.
+ */
+export const MAP_PIN_COLOR = "#D93025";
 
 export const SPACING = {
   xs: 4,
