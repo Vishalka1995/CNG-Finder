@@ -18,6 +18,20 @@ import type { Coords } from "@/lib/location";
 import type { NearbyStation } from "@/types/database";
 
 const LAYER_STATIONS = "station-points";
+const LAYER_GLYPH = "station-glyph";
+
+/**
+ * Marker sizing, tuned to match Google Maps' place pins. The previous marker
+ * drew the pump silhouette itself at ~45px tall, which dominated the map; a
+ * ~22px disc reads as a map pin rather than an illustration.
+ */
+const MARKER_RADIUS = 11;
+
+/**
+ * Glyph scale. The source image is 128px, so this renders it at ~13px --
+ * sized to sit inside the disc above with a little breathing room.
+ */
+const GLYPH_SIZE = 0.1;
 
 /**
  * Street-level zoom flown to when a station is tapped. Above DEFAULT_ZOOM
@@ -121,24 +135,16 @@ export function StationMap({
       <Images images={{ "fuel-pin": { source: require("@/assets/map/fuel-icon.png"), sdf: true } }} />
 
       <GeoJSONSource id="stations" data={collection} onPress={handleSourcePress}>
+        {/* Google Maps-style marker: a small status-coloured disc with a white
+            glyph on top. Two layers rather than one tinted silhouette, because
+            a single SDF image can only be one colour -- the white-glyph-on-
+            colour look needs the colour to come from a shape underneath. */}
         <Layer
           id={LAYER_STATIONS}
-          type="symbol"
-          layout={{
-            "icon-image": "fuel-pin",
-            "icon-size": 0.35,
-            "icon-allow-overlap": true,
-            "icon-anchor": "bottom",
-            "text-field": ["get", "name"],
-            "text-size": 11,
-            "text-offset": [0, 0.4],
-            "text-anchor": "top",
-            "text-allow-overlap": false,
-            "text-optional": true,
-            "text-max-width": 8,
-          }}
+          type="circle"
           paint={{
-            "icon-color": [
+            "circle-radius": MARKER_RADIUS,
+            "circle-color": [
               "match",
               ["get", "status"],
               "available",
@@ -149,6 +155,30 @@ export function StationMap({
               STATUS_COLORS.not_available,
               STATUS_COLORS.unknown,
             ],
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#FFFFFF",
+          }}
+        />
+
+        <Layer
+          id={LAYER_GLYPH}
+          type="symbol"
+          layout={{
+            "icon-image": "fuel-pin",
+            "icon-size": GLYPH_SIZE,
+            "icon-allow-overlap": true,
+            // Labels sit below the disc; `optional` lets a colliding label
+            // drop without taking its marker with it.
+            "text-field": ["get", "name"],
+            "text-size": 11,
+            "text-offset": [0, 1.1],
+            "text-anchor": "top",
+            "text-allow-overlap": false,
+            "text-optional": true,
+            "text-max-width": 8,
+          }}
+          paint={{
+            "icon-color": "#FFFFFF",
             "text-color": "#0F172A",
             "text-halo-color": "#FFFFFF",
             "text-halo-width": 1.2,
