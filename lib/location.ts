@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import * as Location from "expo-location";
 
 import { BANGALORE_CENTER } from "@/constants/config";
@@ -82,4 +83,25 @@ export function formatDistance(meters: number): string {
   if (!Number.isFinite(meters)) return "--";
   if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(1)} km`;
+}
+
+/** A station's identifying fields for building a directions link. */
+export interface DirectionsTarget {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Builds a Google Maps directions URL to a station. No origin is specified,
+ * so Google Maps uses the device's current location as the starting point.
+ */
+export function directionsUrl(station: DirectionsTarget): string {
+  const label = encodeURIComponent(station.name);
+  return `https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}&destination_place_id=${label}`;
+}
+
+/** Opens the device's map app with directions to a station. */
+export function openDirections(station: DirectionsTarget): void {
+  void Linking.openURL(directionsUrl(station));
 }

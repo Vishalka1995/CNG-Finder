@@ -1,5 +1,4 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import * as Linking from "expo-linking";
 import { ArrowLeft, Clock, Heart, Navigation, Phone, Store } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -19,7 +18,7 @@ import { COLORS } from "@/constants/colors";
 import { isDemoMode } from "@/constants/config";
 import { confidenceLabel, timeAgo } from "@/lib/confidence";
 import { getDemoReports } from "@/lib/demoData";
-import { formatDistance } from "@/lib/location";
+import { formatDistance, openDirections as openStationDirections } from "@/lib/location";
 import { supabase } from "@/lib/supabase";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
@@ -119,10 +118,7 @@ export default function StationDetailScreen() {
   };
 
   const openDirections = (): void => {
-    if (!station) return;
-    const label = encodeURIComponent(station.name);
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}&destination_place_id=${label}`;
-    void Linking.openURL(url);
+    if (station) openStationDirections(station);
   };
 
   const callStation = (): void => {
