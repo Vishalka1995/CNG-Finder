@@ -101,10 +101,6 @@ export default function RootLayout() {
           <Stack.Screen name="search" />
           <Stack.Screen name="my-reports" />
           <Stack.Screen name="add-station" options={{ presentation: "modal" }} />
-          <Stack.Screen
-            name="report/[stationId]"
-            options={{ presentation: "modal" }}
-          />
         </Stack>
         <Toast />
       </SafeAreaProvider>
