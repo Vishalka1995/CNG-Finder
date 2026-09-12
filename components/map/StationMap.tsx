@@ -3,17 +3,18 @@ import {
   GeoJSONSource,
   Images,
   Layer,
+  LayerAnnotation,
   Map,
-  UserLocation,
+  useCurrentPosition,
   type CameraRef,
   type GeoJSONSourceRef,
   type PressEventWithFeatures,
 } from "@maplibre/maplibre-react-native";
 import type { Feature, FeatureCollection, Point } from "geojson";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type RefObject } from "react";
 import type { NativeSyntheticEvent } from "react-native";
 
-import { MAP_PIN_COLOR } from "@/constants/colors";
+import { LOCATION_DOT_COLOR, MAP_PIN_COLOR } from "@/constants/colors";
 import { DEFAULT_ZOOM, MAP_STYLES, type MapStyleId } from "@/constants/config";
 import type { Coords } from "@/lib/location";
 import type { NearbyStation } from "@/types/database";
@@ -52,12 +53,80 @@ const GROUP_RADIUS_PX = 44;
  */
 const STATION_TAP_ZOOM = 16;
 
+const USER_LOCATION_SOURCE = "user-location";
+
+/**
+ * A custom "you are here" puck, coloured to match Google Maps' blue rather
+ * than MapLibre's default puck (#33B5E5) -- that default reads as almost the
+ * same colour as the streets basemap's rivers and lakes, which is exactly
+ * what prompted this. Mirrors the library's own UserLocationPuck structure
+ * (accuracy halo + white ring + solid dot) with LOCATION_DOT_COLOR swapped in.
+ */
+function UserLocationDot() {
+  const position = useCurrentPosition();
+
+  const lngLat = useMemo<[number, number] | undefined>(
+    () => (position ? [position.coords.longitude, position.coords.latitude] : undefined),
+    [position],
+  );
+
+  if (!lngLat) return null;
+
+  const accuracy = position?.coords.accuracy;
+
+  return (
+    <LayerAnnotation animated id={USER_LOCATION_SOURCE} lngLat={lngLat}>
+      {typeof accuracy === "number" ? (
+        <Layer
+          id="user-location-accuracy"
+          type="circle"
+          source={USER_LOCATION_SOURCE}
+          paint={{
+            "circle-radius": [
+              "interpolate",
+              ["exponential", 2],
+              ["zoom"],
+              0,
+              9,
+              22,
+              9 + accuracy * 100,
+            ],
+            "circle-color": LOCATION_DOT_COLOR,
+            "circle-opacity": 0.18,
+            "circle-pitch-alignment": "map",
+          }}
+        />
+      ) : null}
+
+      <Layer
+        id="user-location-halo"
+        type="circle"
+        source={USER_LOCATION_SOURCE}
+        paint={{ "circle-radius": 9, "circle-color": "#FFFFFF", "circle-pitch-alignment": "map" }}
+      />
+
+      <Layer
+        id="user-location-core"
+        type="circle"
+        source={USER_LOCATION_SOURCE}
+        paint={{
+          "circle-radius": 6,
+          "circle-color": LOCATION_DOT_COLOR,
+          "circle-pitch-alignment": "map",
+        }}
+      />
+    </LayerAnnotation>
+  );
+}
+
 interface StationMapProps {
   stations: NearbyStation[];
   center: Coords;
   showUserLocation: boolean;
   onSelectStation: (stationId: string) => void;
   mapStyle?: MapStyleId;
+  /** Lets a parent (the "locate me" button) fly the camera imperatively. */
+  cameraRef?: RefObject<CameraRef | null>;
 }
 
 /**
@@ -77,8 +146,10 @@ export function StationMap({
   showUserLocation,
   onSelectStation,
   mapStyle = "streets",
+  cameraRef: externalCameraRef,
 }: StationMapProps) {
-  const cameraRef = useRef<CameraRef>(null);
+  const internalCameraRef = useRef<CameraRef>(null);
+  const cameraRef = externalCameraRef ?? internalCameraRef;
   const sourceRef = useRef<GeoJSONSourceRef>(null);
 
   const isSatellite = mapStyle === "satellite";
@@ -156,7 +227,7 @@ export function StationMap({
         }}
       />
 
-      {showUserLocation ? <UserLocation animated accuracy /> : null}
+      {showUserLocation ? <UserLocationDot /> : null}
 
       <Images images={{ "fuel-pin": { source: require("@/assets/map/fuel-icon.png"), sdf: true } }} />
 

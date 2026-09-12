@@ -40,6 +40,15 @@ export const STATUS_COLORS = {
  */
 export const MAP_PIN_COLOR = "#D93025";
 
+/**
+ * Live-location dot colour, matching the blue Google Maps uses for "this is
+ * you." The MapLibre default puck ships a lighter cyan-blue (#33B5E5) that
+ * reads almost identically to the river/water colour on the streets basemap,
+ * so StationMap renders its own puck (see UserLocationDot) with this colour
+ * instead of the library default.
+ */
+export const LOCATION_DOT_COLOR = "#4285F4";
+
 export const SPACING = {
   xs: 4,
   sm: 8,

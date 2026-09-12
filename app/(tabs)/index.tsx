@@ -1,8 +1,9 @@
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import type { CameraRef } from "@maplibre/maplibre-react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight, Layers, RefreshCw, Search } from "lucide-react-native";
+import { ChevronRight, Layers, LocateFixed, RefreshCw, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View, type LayoutChangeEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StationMap } from "@/components/map/StationMap";
@@ -16,10 +17,14 @@ import {
 } from "@/lib/location";
 import { usePreferencesStore } from "@/stores/preferencesStore";
 import { useStationStore } from "@/stores/stationStore";
+import { showToast } from "@/stores/toastStore";
 import type { NearbyStation } from "@/types/database";
 
 /** How many stations the sheet lists before "View all". */
 const NEARBY_COUNT = 10;
+
+/** Zoom flown to when the driver taps "centre on me". */
+const LOCATE_ZOOM = 15;
 
 /**
  * Home / map screen.
@@ -45,6 +50,13 @@ export default function MapScreen() {
   const loadPreferences = usePreferencesStore((state) => state.load);
 
   const sheetRef = useRef<BottomSheet>(null);
+  const cameraRef = useRef<CameraRef>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [locatingMe, setLocatingMe] = useState(false);
+
+  const onHeaderLayout = useCallback((event: LayoutChangeEvent) => {
+    setHeaderHeight(event.nativeEvent.layout.height);
+  }, []);
 
   // Peek / half / expanded. Half is the initial state so the list is visible
   // the moment the app opens without burying the map.
@@ -94,6 +106,29 @@ export default function MapScreen() {
     if (!selectedId) return;
     sheetRef.current?.snapToIndex(2);
   }, [selectedId]);
+
+  /** "Centre on me" -- fetches a fresh fix and flies the camera to it, same
+   *  as Google Maps' own location button. */
+  const recenterOnMe = async (): Promise<void> => {
+    setLocatingMe(true);
+    try {
+      const fix = await getCurrentCoords();
+      if (fix.isFallback) {
+        showToast("Turn on location to centre the map on you.");
+        return;
+      }
+
+      setCenter(fix.coords);
+      setHasLocation(true);
+      cameraRef.current?.flyTo({
+        center: [fix.coords.longitude, fix.coords.latitude],
+        zoom: LOCATE_ZOOM,
+        duration: 600,
+      });
+    } finally {
+      setLocatingMe(false);
+    }
+  };
 
   const openStation = useCallback(
     (id: string) => router.push({ pathname: "/station/[id]", params: { id } }),
@@ -147,11 +182,17 @@ export default function MapScreen() {
         showUserLocation={hasLocation}
         onSelectStation={setSelectedId}
         mapStyle={mapStyle}
+        cameraRef={cameraRef}
       />
 
-      {/* Basemap toggle. Sits against the right edge below the header, clear of
-          both the header rows and the sheet at its tallest snap point. */}
-      <SafeAreaView className="absolute right-4 top-0" edges={["top"]} pointerEvents="box-none">
+      {/* Map controls, stacked below the header. Positioned from the header's
+          own measured height (via onHeaderLayout) rather than a guessed
+          offset, so they stay put whether or not a banner is showing. */}
+      <View
+        className="absolute right-4 gap-2"
+        style={{ top: headerHeight + 12 }}
+        pointerEvents="box-none"
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={
@@ -160,16 +201,34 @@ export default function MapScreen() {
           onPress={() =>
             void setMapStyle(mapStyle === "satellite" ? "streets" : "satellite")
           }
-          className="mt-[120px] h-11 w-11 items-center justify-center rounded-xl bg-white shadow active:opacity-70"
+          className="h-11 w-11 items-center justify-center rounded-xl bg-white shadow active:opacity-70"
         >
           <Layers color={mapStyle === "satellite" ? COLORS.primary : COLORS.ink} size={20} />
         </Pressable>
-      </SafeAreaView>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Centre on my location"
+          onPress={() => void recenterOnMe()}
+          disabled={locatingMe}
+          className="h-11 w-11 items-center justify-center rounded-xl bg-white shadow active:opacity-70"
+        >
+          {locatingMe ? (
+            <ActivityIndicator color={COLORS.primary} size="small" />
+          ) : (
+            <LocateFixed color={COLORS.ink} size={20} />
+          )}
+        </Pressable>
+      </View>
 
       {/* Header. Just the search entry point -- station count and refresh live
           in the sheet's own header below, and "Add station" lives on the List
           tab, where browsing everything makes a gap more obvious. */}
-      <SafeAreaView className="absolute left-0 right-0 top-0" edges={["top"]}>
+      <SafeAreaView
+        className="absolute left-0 right-0 top-0"
+        edges={["top"]}
+        onLayout={onHeaderLayout}
+      >
         <View className="mx-4 mt-2 flex-row items-center gap-2">
           <Pressable
             accessibilityRole="search"
