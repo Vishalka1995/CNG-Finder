@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { Crown, Pencil, Trophy } from "lucide-react-native";
+import { ChevronRight, Crown, Pencil, Trophy } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -132,30 +132,44 @@ export default function LeaderboardScreen() {
         </Text>
 
         <View className="mt-3 flex-row items-center gap-2">
-          {/* The name is only worth prompting for once there is a board to
-              appear on, so it is offered here rather than during onboarding. */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Change your leaderboard name"
-            onPress={() => setEditingName(true)}
-            className="flex-1 flex-row items-center rounded-xl bg-slate-100 px-3 py-2 active:opacity-70"
-          >
-            <Pencil color={COLORS.muted} size={14} />
-            <Text className="ml-2 flex-1 font-medium text-label text-ink" numberOfLines={1}>
-              {name ? `Showing as ${name}` : "Set your name"}
-            </Text>
-          </Pressable>
+          {/* Once set, the name is fixed (migration 0014), so it stops being a
+              control and becomes a label. Offered here rather than at
+              onboarding: a name is only worth choosing once there is a board
+              to appear on. */}
+          {name ? (
+            <View className="max-w-[38%] rounded-xl bg-slate-100 px-3 py-2">
+              <Text className="font-medium text-label text-ink" numberOfLines={1}>
+                {name}
+              </Text>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Set your leaderboard name"
+              onPress={() => setEditingName(true)}
+              className="flex-row items-center rounded-xl bg-slate-100 px-3 py-2 active:opacity-70"
+            >
+              <Pencil color={COLORS.muted} size={14} />
+              <Text className="ml-2 font-medium text-label text-ink">Set your name</Text>
+            </Pressable>
+          )}
 
           {/* Up here rather than below the list: past winners are what make the
               prize feel real, and nobody scrolls 100 rows to find out. */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Hall of Fame"
+            accessibilityLabel="See past monthly winners"
             onPress={() => router.push("/hall-of-fame")}
-            className="flex-row items-center rounded-xl bg-queue/15 px-3 py-2 active:opacity-70"
+            className="flex-1 flex-row items-center rounded-xl bg-queue/15 px-3 py-2 active:opacity-70"
           >
             <Crown color={COLORS.queue} size={14} />
-            <Text className="ml-2 font-medium text-label text-ink">Winners</Text>
+            <Text
+              className="ml-2 flex-1 font-medium text-label text-ink"
+              numberOfLines={1}
+            >
+              See past winners
+            </Text>
+            <ChevronRight color={COLORS.muted} size={14} />
           </Pressable>
         </View>
       </View>

@@ -58,6 +58,15 @@ export function NameDialog({ initialValue, onClose, onSaved }: NameDialogProps) 
             to be your real name.
           </Text>
 
+          {/* Stated before they commit, not discovered afterwards: it cannot
+              be undone, and the rule is enforced by the database. */}
+          <View className="mt-3 rounded-xl bg-queue/15 px-4 py-3">
+            <Text className="font-medium text-label leading-5 text-ink">
+              Choose carefully — your name can only be set once and cannot be
+              changed later.
+            </Text>
+          </View>
+
           <TextInput
             value={value}
             onChangeText={(text) => setValue(text.slice(0, DISPLAY_NAME_MAX))}

@@ -180,7 +180,15 @@ export async function setDisplayName(name: string): Promise<string | null> {
       .update({ display_name: trimmed })
       .eq("auth_user_id", uid);
 
-    if (error) return "Could not save that name. Please try again.";
+    if (error) {
+      // The database is the authority on the one-time rule (migration 0014),
+      // so this can fire even when the app thinks no name is set -- e.g. a
+      // reinstall reading a row that already has one.
+      if (error.message.includes("DISPLAY_NAME_LOCKED")) {
+        return "Your name is already set and cannot be changed.";
+      }
+      return "Could not save that name. Please try again.";
+    }
     return null;
   } catch {
     return "Could not save that name. Please try again.";
