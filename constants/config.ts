@@ -62,11 +62,15 @@ export const CONFIDENCE_WINDOW_MIN = 60;
 export const BANGALORE_CENTER = { longitude: 77.5946, latitude: 12.9716 } as const;
 
 /**
- * One level above the map's cluster-max-zoom (13, in StationMap.tsx) so pins
- * open already split apart instead of merged into cluster circles -- opening
- * more zoomed out looked like "very few stations" until the user zoomed in.
+ * City-wide framing on open. A tighter zoom here seemed like the fix for
+ * clustering hiding stations (see GROUP_MAX_ZOOM in StationMap.tsx for why
+ * that isn't the right lever), but it backfires whenever the device's real
+ * GPS position -- now resolved correctly thanks to the retry in
+ * lib/location.ts -- simply isn't near a station: a tight zoom then shows
+ * nothing but the user's own dot until they zoom out or pan. Keep this wide
+ * and let GROUP_MAX_ZOOM do the decluttering instead.
  */
-export const DEFAULT_ZOOM = 14;
+export const DEFAULT_ZOOM = 12;
 
 /** Client-side cache lifetime for the nearby-station list. */
 export const STATION_CACHE_MS = 5 * 60 * 1000;

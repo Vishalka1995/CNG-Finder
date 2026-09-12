@@ -41,8 +41,13 @@ const GROUP_RADIUS = 14;
 const GLYPH_SIZE = 0.1;
 const GROUP_GLYPH_SIZE = 0.12;
 
-/** Below this zoom, pins close together collapse into one. */
-const GROUP_MAX_ZOOM = 13;
+/**
+ * Below this zoom, pins close together collapse into one. Set below
+ * DEFAULT_ZOOM (12, in constants/config.ts) on purpose: the map should open
+ * with individual pins already visible, and only cluster once the user zooms
+ * out further than the default city-wide view.
+ */
+const GROUP_MAX_ZOOM = 11;
 
 /** Pixel radius within which pins are grouped. */
 const GROUP_RADIUS_PX = 44;
