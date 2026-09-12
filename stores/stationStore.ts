@@ -101,6 +101,19 @@ export const useStationStore = create<StationState>((set, get) => ({
       if (error) throw new Error(error.message);
 
       const stations = data ?? [];
+
+      // A fetch that comes back empty should not erase a list that was
+      // already showing -- on cold start this is called with whatever GPS
+      // fix resolved first, and a transient bad fix (a stale cached
+      // last-known location, momentary drift) is far more likely than the
+      // driver having genuinely moved somewhere with zero stations in 30km.
+      // An explicit refresh (force) is trusted either way, since the user
+      // asked for that fetch specifically.
+      if (stations.length === 0 && !force && get().stations.length > 0) {
+        set({ isLoading: false, error: null });
+        return;
+      }
+
       set({
         stations,
         isLoading: false,
