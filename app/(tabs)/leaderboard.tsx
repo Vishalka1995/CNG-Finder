@@ -76,7 +76,6 @@ export default function LeaderboardScreen() {
   const [editingName, setEditingName] = useState(false);
 
   const loadPreferences = usePreferencesStore((state) => state.load);
-  const showcaseMode = usePreferencesStore((state) => state.showcaseMode);
 
   const load = useCallback(async (): Promise<void> => {
     // Showcase mode lives in preferences, and this tab can be the first one
@@ -131,14 +130,6 @@ export default function LeaderboardScreen() {
         <Text className="mt-1 font-sans text-caption text-muted">
           {monthLabel()} — {days} {days === 1 ? "day" : "days"} left
         </Text>
-
-        {showcaseMode ? (
-          <View className="mt-3 rounded-xl bg-queue/15 px-4 py-2">
-            <Text className="font-medium text-label text-ink">
-              Showcase mode — these standings are sample data
-            </Text>
-          </View>
-        ) : null}
 
         <View className="mt-3 flex-row items-center gap-2">
           {/* The name is only worth prompting for once there is a board to
