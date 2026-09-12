@@ -1,4 +1,5 @@
 import type {
+  HallOfFameRow,
   LeaderboardRow,
   MyPlaceRow,
   NearbyStation,
@@ -167,6 +168,40 @@ export function showcaseLeaderboard(myName: string | null): LeaderboardRow[] {
 
   return rows.map((row, index) => ({ ...row, place: index + 1 }));
 }
+
+/**
+ * Past champions. Three months of history, because one row does not read as a
+ * recurring competition and the whole idea is that it comes round again.
+ */
+export const SHOWCASE_WINNERS: HallOfFameRow[] = [
+  {
+    month: "2026-08",
+    place: 1,
+    winner_name: "Ramesh K",
+    winner_city: "Bangalore",
+    points: 1240,
+    prize: "10kg CNG free",
+    quote: "Maine socha nahi tha ki main jeetunga — par app ne mujhe motivated rakha!",
+  },
+  {
+    month: "2026-07",
+    place: 1,
+    winner_name: "Suresh M",
+    winner_city: "Kolhapur",
+    points: 980,
+    prize: "10kg CNG free",
+    quote: "Roz subah ek report, bas itna hi kiya.",
+  },
+  {
+    month: "2026-06",
+    place: 1,
+    winner_name: "Priya N",
+    winner_city: "Kolhapur",
+    points: 820,
+    prize: "10kg CNG free",
+    quote: null,
+  },
+];
 
 export const SHOWCASE_MY_PLACE: MyPlaceRow = {
   place: MY_PLACE,

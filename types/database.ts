@@ -156,6 +156,18 @@ export type LeaderboardRow = {
   is_me: boolean;
 }
 
+/** A past champion, as shown in the Hall of Fame. Carries nothing that could
+ *  identify or pay someone -- see hall_of_fame() in migration 0012. */
+export type HallOfFameRow = {
+  month: string;
+  place: number;
+  winner_name: string;
+  winner_city: string | null;
+  points: number;
+  prize: string | null;
+  quote: string | null;
+}
+
 export type MyPlaceRow = {
   place: number;
   points: number;
@@ -290,6 +302,10 @@ export interface Database {
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         Args: {};
         Returns: MyPlaceRow[];
+      };
+      hall_of_fame: {
+        Args: { max_results?: number };
+        Returns: HallOfFameRow[];
       };
     };
     Enums: {

@@ -1,5 +1,5 @@
-import { useFocusEffect } from "expo-router";
-import { Pencil, Trophy } from "lucide-react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { Crown, Pencil, Trophy } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -67,6 +67,7 @@ function Row({ row }: { row: LeaderboardRow }) {
  * computed anywhere the client could reach it.
  */
 export default function LeaderboardScreen() {
+  const router = useRouter();
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [myPlace, setMyPlace] = useState<MyPlaceRow | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -182,6 +183,18 @@ export default function LeaderboardScreen() {
             />
           }
           renderItem={({ item }) => <Row row={item} />}
+          ListFooterComponent={
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/hall-of-fame")}
+              className="mt-2 min-h-[48px] flex-row items-center justify-center rounded-2xl border border-slate-200 active:opacity-70"
+            >
+              <Crown color={COLORS.queue} size={16} />
+              <Text className="ml-2 font-semibold text-caption text-ink">
+                Hall of Fame
+              </Text>
+            </Pressable>
+          }
           ListEmptyComponent={
             <View className="items-center px-6 py-12">
               <Trophy color={COLORS.unknown} size={40} strokeWidth={1.5} />

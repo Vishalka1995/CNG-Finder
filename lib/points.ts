@@ -2,11 +2,17 @@ import {
   SHOWCASE_BADGES,
   SHOWCASE_MY_PLACE,
   SHOWCASE_POINTS,
+  SHOWCASE_WINNERS,
   showcaseLeaderboard,
 } from "@/lib/showcase";
 import { supabase } from "@/lib/supabase";
 import { usePreferencesStore } from "@/stores/preferencesStore";
-import type { LeaderboardRow, MyPlaceRow, UserPointsRow } from "@/types/database";
+import type {
+  HallOfFameRow,
+  LeaderboardRow,
+  MyPlaceRow,
+  UserPointsRow,
+} from "@/types/database";
 
 /**
  * Read outside React on purpose: these are plain async functions, not hooks,
@@ -87,6 +93,22 @@ export async function getMyBadges(): Promise<string[]> {
     const { data, error } = await supabase.from("badges").select("badge_id");
     if (error || !data) return [];
     return data.map((row) => row.badge_id);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Past monthly champions. Empty until a month has actually been won -- the
+ * job that declares winners is phase C and does not exist yet.
+ */
+export async function getHallOfFame(): Promise<HallOfFameRow[]> {
+  if (isShowcase()) return SHOWCASE_WINNERS;
+
+  try {
+    const { data, error } = await supabase.rpc("hall_of_fame", {});
+    if (error || !data) return [];
+    return data;
   } catch {
     return [];
   }
