@@ -26,10 +26,31 @@ export async function hasLocationPermission(): Promise<boolean> {
   return status === "granted";
 }
 
+async function tryGetPosition(): Promise<Coords | null> {
+  try {
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+  } catch {
+    return null;
+  }
+}
+
+/** Retry delay for the first fix after permission is freshly granted -- the
+ *  location provider is commonly still starting up at that point. */
+const FIRST_FIX_RETRY_MS = 1500;
+
 /**
  * Current position, falling back to the Bangalore centre when permission is
  * denied or the fix fails. Callers should surface `isFallback` so the user
  * understands why distances may look wrong.
+ *
+ * Retries once on failure: the very first fix right after permission is
+ * granted (typically straight out of onboarding) commonly fails while the
+ * location provider is still warming up, and without a retry the map would
+ * silently stick with the fallback centre -- and no live-location dot -- for
+ * the rest of the session.
  */
 export async function getCurrentCoords(): Promise<LocationResult> {
   const granted = await hasLocationPermission();
@@ -38,21 +59,14 @@ export async function getCurrentCoords(): Promise<LocationResult> {
     return { coords: { ...BANGALORE_CENTER }, isFallback: true, granted: false };
   }
 
-  try {
-    const position = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    return {
-      coords: {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      },
-      isFallback: false,
-      granted: true,
-    };
-  } catch {
-    return { coords: { ...BANGALORE_CENTER }, isFallback: true, granted: true };
-  }
+  const first = await tryGetPosition();
+  if (first) return { coords: first, isFallback: false, granted: true };
+
+  await new Promise((resolve) => setTimeout(resolve, FIRST_FIX_RETRY_MS));
+  const retry = await tryGetPosition();
+  if (retry) return { coords: retry, isFallback: false, granted: true };
+
+  return { coords: { ...BANGALORE_CENTER }, isFallback: true, granted: true };
 }
 
 const EARTH_RADIUS_M = 6_371_000;

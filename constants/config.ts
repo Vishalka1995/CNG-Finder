@@ -61,7 +61,12 @@ export const CONFIDENCE_WINDOW_MIN = 60;
 /** Fallback camera position when location permission is denied. */
 export const BANGALORE_CENTER = { longitude: 77.5946, latitude: 12.9716 } as const;
 
-export const DEFAULT_ZOOM = 12;
+/**
+ * One level above the map's cluster-max-zoom (13, in StationMap.tsx) so pins
+ * open already split apart instead of merged into cluster circles -- opening
+ * more zoomed out looked like "very few stations" until the user zoomed in.
+ */
+export const DEFAULT_ZOOM = 14;
 
 /** Client-side cache lifetime for the nearby-station list. */
 export const STATION_CACHE_MS = 5 * 60 * 1000;
