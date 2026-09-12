@@ -30,6 +30,7 @@ import {
   getCurrentCoords,
   openDirections as openStationDirections,
 } from "@/lib/location";
+import { getPointsForReport } from "@/lib/points";
 import { parseReportError, supabase, toPointWKT } from "@/lib/supabase";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useReportStore } from "@/stores/reportStore";
@@ -258,13 +259,19 @@ export default function StationDetailScreen() {
 
       const deviceId = await getDeviceId();
 
-      const { error: insertError } = await supabase.from("reports").insert({
-        station_id: id,
-        status: selected,
-        note: note.trim() || null,
-        device_id: deviceId,
-        reported_location: toPointWKT(fix.coords.longitude, fix.coords.latitude),
-      });
+      // Selects the new row back so its id can be used to look up what the
+      // award trigger scored it -- see the toast below.
+      const { data: inserted, error: insertError } = await supabase
+        .from("reports")
+        .insert({
+          station_id: id,
+          status: selected,
+          note: note.trim() || null,
+          device_id: deviceId,
+          reported_location: toPointWKT(fix.coords.longitude, fix.coords.latitude),
+        })
+        .select("id")
+        .single();
 
       if (insertError) {
         failWith(messageForError(parseReportError(insertError.message)));
@@ -279,7 +286,17 @@ export default function StationDetailScreen() {
         note: note.trim() || null,
       });
       hapticSuccess();
-      showToast("Thanks! Your report helps other drivers.");
+
+      // A repeat report inside the award cooldown scores zero. Say nothing
+      // about points in that case rather than "+0" -- the cooldown is
+      // deliberately not advertised, and the report was still worth making.
+      const earned = await getPointsForReport(inserted.id);
+      showToast(
+        earned && earned > 0
+          ? `Thanks! +${earned} points earned.`
+          : "Thanks! Your report helps other drivers.",
+      );
+
       setSelected(null);
       setNote("");
     } catch (err) {

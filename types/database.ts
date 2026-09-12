@@ -118,6 +118,42 @@ export type ReportInsert = {
   reported_location: string;
 }
 
+/** Why points moved. Mirrors the `point_reason` enum in migration 0008. */
+export type PointReason =
+  | "base_report"
+  | "first_of_day"
+  | "peak_hours"
+  | "stale_station"
+  | "accuracy_bonus"
+  | "streak_bonus"
+  | "referral_bonus"
+  | "accuracy_deduction";
+
+export type PointTransactionRow = {
+  id: string;
+  auth_user_id: string;
+  report_id: string | null;
+  station_id: string | null;
+  points: number;
+  reason: PointReason;
+  created_at: string;
+}
+
+export type UserPointsRow = {
+  auth_user_id: string;
+  total_points: number;
+  monthly_points: number;
+  total_reports: number;
+  monthly_reports: number;
+  /** 'YYYY-MM' in IST, or null before the first scored report. */
+  monthly_period: string | null;
+  accuracy_score: number | null;
+  current_streak: number;
+  longest_streak: number;
+  last_report_date: string | null;
+  updated_at: string;
+}
+
 /**
  * Schema shape expected by supabase-js.
  *
@@ -174,6 +210,25 @@ export interface Database {
         Row: StationSubmissionRow;
         Insert: StationSubmissionInsert;
         // Moderation happens with the service role, never from the app.
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Update: {};
+        Relationships: [];
+      };
+      // Both points tables are read-only from the app. The award trigger owns
+      // every write and runs as SECURITY DEFINER; the client's INSERT, UPDATE
+      // and DELETE grants are revoked outright (migration 0008).
+      point_transactions: {
+        Row: PointTransactionRow;
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Insert: {};
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Update: {};
+        Relationships: [];
+      };
+      user_points: {
+        Row: UserPointsRow;
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Insert: {};
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         Update: {};
         Relationships: [];
