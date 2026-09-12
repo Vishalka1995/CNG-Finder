@@ -31,7 +31,7 @@ import {
   openDirections as openStationDirections,
 } from "@/lib/location";
 import { getPointsForReport } from "@/lib/points";
-import { showcaseReports } from "@/lib/showcase";
+import { SHOWCASE_REPORT_POINTS, showcaseReports } from "@/lib/showcase";
 import { parseReportError, supabase, toPointWKT } from "@/lib/supabase";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { usePreferencesStore } from "@/stores/preferencesStore";
@@ -209,6 +209,20 @@ export default function StationDetailScreen() {
     setSubmitError(null);
 
     try {
+      // Showcase mode: accept it locally so a demo can be walked all the way
+      // through. Nothing is sent -- a synthetic report in the real table would
+      // tell actual drivers a pump has gas on the strength of a demo. The
+      // optimistic update still runs, so the station visibly changes colour,
+      // which is the part worth showing.
+      if (usePreferencesStore.getState().showcaseMode) {
+        applyOptimisticReport(id, selected);
+        hapticSuccess();
+        showToast(`Thanks! +${SHOWCASE_REPORT_POINTS} points earned.`);
+        setSelected(null);
+        setNote("");
+        return;
+      }
+
       // Demo mode: mirror the real rules (including the rate limit) locally.
       if (isDemoMode()) {
         if (hasDemoReport(id)) {

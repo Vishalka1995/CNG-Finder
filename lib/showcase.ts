@@ -75,8 +75,44 @@ export function showcaseStation(station: NearbyStation): NearbyStation {
   };
 }
 
+/** Metres the nearest station is placed at in showcase mode. Inside the 300 m
+ *  reporting radius, and not suspiciously round. */
+const SHOWCASE_AT_STATION_M = 80;
+
+/** Points the showcase report claims to award. The figure a real first report
+ *  at a quiet Kolhapur station earns: (5 + 10 + 12) x 1.5. */
+export const SHOWCASE_REPORT_POINTS = 41;
+
 export function showcaseStations(stations: NearbyStation[]): NearbyStation[] {
-  return stations.map(showcaseStation);
+  const shown = stations.map(showcaseStation);
+  if (shown.length === 0) return shown;
+
+  // Put the driver AT the closest station. Statuses alone are not enough for a
+  // demo: the prompt to report, and reporting itself, are both gated on being
+  // within 300 m, so without this the most important half of the app cannot be
+  // shown from a desk.
+  let nearestIndex = 0;
+  for (let index = 1; index < shown.length; index += 1) {
+    if ((shown[index]?.distance_m ?? Infinity) < (shown[nearestIndex]?.distance_m ?? Infinity)) {
+      nearestIndex = index;
+    }
+  }
+
+  const nearest = shown[nearestIndex];
+  if (nearest) {
+    shown[nearestIndex] = {
+      ...nearest,
+      distance_m: SHOWCASE_AT_STATION_M,
+      // Being at a station with no recent report is the case worth
+      // demonstrating: it is what the prompt is asking you to fix.
+      status: null,
+      confidence: "unknown",
+      report_count: 0,
+      last_reported_at: null,
+    };
+  }
+
+  return shown;
 }
 
 const NOTES = [
