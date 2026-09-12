@@ -156,8 +156,8 @@ export type LeaderboardRow = {
   is_me: boolean;
 }
 
-/** A past champion, as shown in the Hall of Fame. Carries nothing that could
- *  identify or pay someone -- see hall_of_fame() in migration 0012. */
+/** One podium place in a past month. Carries nothing that could identify or
+ *  pay someone -- see hall_of_fame() in migration 0013. */
 export type HallOfFameRow = {
   month: string;
   place: number;
@@ -165,7 +165,6 @@ export type HallOfFameRow = {
   winner_city: string | null;
   points: number;
   prize: string | null;
-  quote: string | null;
 }
 
 export type MyPlaceRow = {
@@ -304,7 +303,7 @@ export interface Database {
         Returns: MyPlaceRow[];
       };
       hall_of_fame: {
-        Args: { max_results?: number };
+        Args: { max_months?: number };
         Returns: HallOfFameRow[];
       };
     };

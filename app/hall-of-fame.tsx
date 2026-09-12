@@ -22,28 +22,56 @@ function monthName(month: string): string {
   return `${label} ${year}`;
 }
 
-function Winner({ row }: { row: HallOfFameRow }) {
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+interface Podium {
+  month: string;
+  places: HallOfFameRow[];
+}
+
+/** Rows arrive newest month first, gold to bronze within each -- see
+ *  hall_of_fame(). Grouping preserves that order rather than re-sorting. */
+function groupByMonth(rows: HallOfFameRow[]): Podium[] {
+  const months: Podium[] = [];
+
+  for (const row of rows) {
+    const current = months.at(-1);
+    if (current && current.month === row.month) {
+      current.places.push(row);
+    } else {
+      months.push({ month: row.month, places: [row] });
+    }
+  }
+
+  return months;
+}
+
+function PodiumCard({ podium }: { podium: Podium }) {
   return (
     <View className="rounded-2xl bg-slate-50 p-4">
-      <View className="flex-row items-center">
-        <Crown color={COLORS.queue} size={18} />
-        <Text className="ml-2 flex-1 font-semibold text-body text-ink">
-          {row.winner_name}
-        </Text>
-        <Text className="font-sans text-label text-muted">{monthName(row.month)}</Text>
-      </View>
-
-      <Text className="mt-1 font-sans text-caption text-muted">
-        {row.winner_city ? `${row.winner_city} · ` : ""}
-        {row.points} points
-        {row.prize ? ` · ${row.prize}` : ""}
+      <Text className="font-semibold text-caption text-ink">
+        {monthName(podium.month)}
       </Text>
 
-      {row.quote ? (
-        <Text className="mt-3 font-sans text-caption italic leading-5 text-ink">
-          “{row.quote}”
-        </Text>
-      ) : null}
+      <View className="mt-3 gap-2">
+        {podium.places.map((row) => (
+          <View key={row.place} className="flex-row items-center">
+            <Text className="w-7 text-lg">{MEDALS[row.place - 1] ?? ""}</Text>
+
+            <View className="flex-1 pr-2">
+              <Text className="font-medium text-caption text-ink" numberOfLines={1}>
+                {row.winner_name}
+              </Text>
+              <Text className="font-sans text-label text-muted" numberOfLines={1}>
+                {row.winner_city ? `${row.winner_city} · ` : ""}
+                {row.prize ?? "—"}
+              </Text>
+            </View>
+
+            <Text className="font-bold text-caption text-ink">{row.points}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -99,10 +127,10 @@ export default function HallOfFameScreen() {
         </View>
       ) : (
         <FlatList
-          data={rows}
+          data={groupByMonth(rows)}
           keyExtractor={(item) => item.month}
           contentContainerClassName="px-6 py-6 gap-3"
-          renderItem={({ item }) => <Winner row={item} />}
+          renderItem={({ item }) => <PodiumCard podium={item} />}
           ListEmptyComponent={
             <View className="items-center px-6 py-12">
               <Crown color={COLORS.unknown} size={40} strokeWidth={1.5} />

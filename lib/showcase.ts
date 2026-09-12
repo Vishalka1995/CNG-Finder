@@ -170,37 +170,22 @@ export function showcaseLeaderboard(myName: string | null): LeaderboardRow[] {
 }
 
 /**
- * Past champions. Three months of history, because one row does not read as a
- * recurring competition and the whole idea is that it comes round again.
+ * Past podiums. Three months, because one month does not read as a recurring
+ * competition and recurring is the whole idea. Prizes match the intended
+ * ladder: 10kg / 5kg / 3kg.
  */
 export const SHOWCASE_WINNERS: HallOfFameRow[] = [
-  {
-    month: "2026-08",
-    place: 1,
-    winner_name: "Ramesh K",
-    winner_city: "Bangalore",
-    points: 1240,
-    prize: "10kg CNG free",
-    quote: "Maine socha nahi tha ki main jeetunga — par app ne mujhe motivated rakha!",
-  },
-  {
-    month: "2026-07",
-    place: 1,
-    winner_name: "Suresh M",
-    winner_city: "Kolhapur",
-    points: 980,
-    prize: "10kg CNG free",
-    quote: "Roz subah ek report, bas itna hi kiya.",
-  },
-  {
-    month: "2026-06",
-    place: 1,
-    winner_name: "Priya N",
-    winner_city: "Kolhapur",
-    points: 820,
-    prize: "10kg CNG free",
-    quote: null,
-  },
+  { month: "2026-08", place: 1, winner_name: "Ramesh K", winner_city: "Bangalore", points: 1240, prize: "10kg CNG free" },
+  { month: "2026-08", place: 2, winner_name: "Suresh M", winner_city: "Kolhapur", points: 1105, prize: "5kg CNG free" },
+  { month: "2026-08", place: 3, winner_name: "Priya N", winner_city: "Kolhapur", points: 940, prize: "3kg CNG free" },
+
+  { month: "2026-07", place: 1, winner_name: "Suresh M", winner_city: "Kolhapur", points: 980, prize: "10kg CNG free" },
+  { month: "2026-07", place: 2, winner_name: "Anil Deshmukh", winner_city: "Kolhapur", points: 870, prize: "5kg CNG free" },
+  { month: "2026-07", place: 3, winner_name: "Fatima S", winner_city: "Bangalore", points: 690, prize: "3kg CNG free" },
+
+  { month: "2026-06", place: 1, winner_name: "Priya N", winner_city: "Kolhapur", points: 820, prize: "10kg CNG free" },
+  { month: "2026-06", place: 2, winner_name: "Vikram J", winner_city: "Kolhapur", points: 745, prize: "5kg CNG free" },
+  { month: "2026-06", place: 3, winner_name: "Ramesh K", winner_city: "Bangalore", points: 612, prize: "3kg CNG free" },
 ];
 
 export const SHOWCASE_MY_PLACE: MyPlaceRow = {

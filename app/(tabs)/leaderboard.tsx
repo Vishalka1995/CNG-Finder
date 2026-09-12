@@ -140,19 +140,33 @@ export default function LeaderboardScreen() {
           </View>
         ) : null}
 
-        {/* The name is only worth prompting for once there is a board to appear
-            on, so it is offered here rather than during onboarding. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Change your leaderboard name"
-          onPress={() => setEditingName(true)}
-          className="mt-3 flex-row items-center self-start rounded-xl bg-slate-100 px-3 py-2 active:opacity-70"
-        >
-          <Pencil color={COLORS.muted} size={14} />
-          <Text className="ml-2 font-medium text-label text-ink">
-            {name ? `Showing as ${name}` : "Set your name"}
-          </Text>
-        </Pressable>
+        <View className="mt-3 flex-row items-center gap-2">
+          {/* The name is only worth prompting for once there is a board to
+              appear on, so it is offered here rather than during onboarding. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Change your leaderboard name"
+            onPress={() => setEditingName(true)}
+            className="flex-1 flex-row items-center rounded-xl bg-slate-100 px-3 py-2 active:opacity-70"
+          >
+            <Pencil color={COLORS.muted} size={14} />
+            <Text className="ml-2 flex-1 font-medium text-label text-ink" numberOfLines={1}>
+              {name ? `Showing as ${name}` : "Set your name"}
+            </Text>
+          </Pressable>
+
+          {/* Up here rather than below the list: past winners are what make the
+              prize feel real, and nobody scrolls 100 rows to find out. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Hall of Fame"
+            onPress={() => router.push("/hall-of-fame")}
+            className="flex-row items-center rounded-xl bg-queue/15 px-3 py-2 active:opacity-70"
+          >
+            <Crown color={COLORS.queue} size={14} />
+            <Text className="ml-2 font-medium text-label text-ink">Winners</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Your standing, pinned above the list -- most drivers are nowhere near
@@ -183,18 +197,6 @@ export default function LeaderboardScreen() {
             />
           }
           renderItem={({ item }) => <Row row={item} />}
-          ListFooterComponent={
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push("/hall-of-fame")}
-              className="mt-2 min-h-[48px] flex-row items-center justify-center rounded-2xl border border-slate-200 active:opacity-70"
-            >
-              <Crown color={COLORS.queue} size={16} />
-              <Text className="ml-2 font-semibold text-caption text-ink">
-                Hall of Fame
-              </Text>
-            </Pressable>
-          }
           ListEmptyComponent={
             <View className="items-center px-6 py-12">
               <Trophy color={COLORS.unknown} size={40} strokeWidth={1.5} />
