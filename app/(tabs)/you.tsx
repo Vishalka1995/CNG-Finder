@@ -1,15 +1,18 @@
 import Constants from "expo-constants";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Bell, ChevronRight, Info, Mail, RadioTower, Share2, Star } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Share, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { PointsCard } from "@/components/points/PointsCard";
 import { COLORS } from "@/constants/colors";
 import { isDemoMode } from "@/constants/config";
 import { getDeviceId } from "@/lib/device";
+import { getMyPoints } from "@/lib/points";
 import { supabase } from "@/lib/supabase";
 import { usePreferencesStore } from "@/stores/preferencesStore";
+import type { UserPointsRow } from "@/types/database";
 
 const FEEDBACK_EMAIL = "vishal.a@flatworldsolutions.com";
 
@@ -61,11 +64,14 @@ function ToggleRow({ icon, label, sublabel, value, onValueChange }: ToggleRowPro
   );
 }
 
-export default function SettingsScreen() {
+export default function YouScreen() {
   const router = useRouter();
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+
+  const [points, setPoints] = useState<UserPointsRow | null>(null);
+  const [loadingPoints, setLoadingPoints] = useState(true);
 
   const { notificationsEnabled, load: loadPreferences, setNotificationsEnabled } =
     usePreferencesStore();
@@ -77,6 +83,27 @@ export default function SettingsScreen() {
     });
     void loadPreferences();
   }, [loadPreferences]);
+
+  // Refetched on every focus, not just on mount: the most common way to arrive
+  // here is straight after reporting, and stale totals would undercut the
+  // whole point of showing them.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      const load = async (): Promise<void> => {
+        const result = await getMyPoints();
+        if (cancelled) return;
+        setPoints(result);
+        setLoadingPoints(false);
+      };
+
+      void load();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   const version = Constants.expoConfig?.version ?? "1.0.0";
 
@@ -95,7 +122,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <ScrollView contentContainerClassName="px-6 py-6">
-        <Text className="font-bold text-title text-ink">Settings</Text>
+        <Text className="font-bold text-title text-ink">You</Text>
 
         {isDemoMode() ? (
           <View className="mt-4 rounded-xl bg-queue/15 px-4 py-3">
@@ -106,6 +133,11 @@ export default function SettingsScreen() {
             </Text>
           </View>
         ) : null}
+
+        {/* Scoring summary */}
+        <Text className="mt-6 font-semibold text-caption text-muted">YOUR POINTS</Text>
+
+        <PointsCard points={points} isLoading={loadingPoints} />
 
         {/* About the app */}
         <Text className="mt-8 font-semibold text-caption text-muted">HOW IT WORKS</Text>

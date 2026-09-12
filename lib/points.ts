@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { UserPointsRow } from "@/types/database";
 
 /**
  * Reading the points a driver has earned.
@@ -30,6 +31,29 @@ export async function getPointsForReport(reportId: string): Promise<number | nul
     if (error || !data) return null;
 
     return data.reduce((total, row) => total + row.points, 0);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * This device's own totals, or null before the first scored report.
+ *
+ * No `.eq()` on the user id: `user_points_select_self` (migration 0008) already
+ * restricts the table to the caller's own row, so the query can only ever
+ * return that one. Filtering here as well would imply the client is what keeps
+ * one driver's totals away from another's, which it is not.
+ */
+export async function getMyPoints(): Promise<UserPointsRow | null> {
+  try {
+    const { data, error } = await supabase
+      .from("user_points")
+      .select("*")
+      .maybeSingle();
+
+    if (error) return null;
+
+    return data;
   } catch {
     return null;
   }

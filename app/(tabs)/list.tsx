@@ -11,20 +11,32 @@ import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
 import type { NearbyStation } from "@/types/database";
 
-type Filter = "all" | "available" | "open_now";
+type Filter = "all" | "available" | "open_now" | "saved";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "available", label: "Available" },
   { key: "open_now", label: "Open 24h" },
+  { key: "saved", label: "Saved" },
 ];
 
-function applyFilter(stations: NearbyStation[], filter: Filter): NearbyStation[] {
+/**
+ * Saved is a filter rather than its own screen: it is the same station list
+ * with the same cards, differing only by which rows survive. A separate tab
+ * for that was a whole navigation slot spent on a `filter()` call.
+ */
+function applyFilter(
+  stations: NearbyStation[],
+  filter: Filter,
+  favoriteIds: string[],
+): NearbyStation[] {
   switch (filter) {
     case "available":
       return stations.filter((station) => station.status === "available");
     case "open_now":
       return stations.filter((station) => station.is_24x7);
+    case "saved":
+      return stations.filter((station) => favoriteIds.includes(station.id));
     default:
       return stations;
   }
@@ -42,7 +54,16 @@ export default function ListScreen() {
     void loadFavorites();
   }, [loadFavorites]);
 
-  const visible = useMemo(() => applyFilter(stations, filter), [stations, filter]);
+  const visible = useMemo(
+    () => applyFilter(stations, filter, favoriteIds),
+    [stations, filter, favoriteIds],
+  );
+
+  // A station can be saved and still be absent here, because `stations` only
+  // holds what is within range right now. Saying so beats leaving someone to
+  // wonder where a station they saved went.
+  const savedOutOfRange =
+    filter === "saved" ? favoriteIds.length - visible.length : 0;
 
   const refresh = async (): Promise<void> => {
     setRefreshing(true);
@@ -137,15 +158,32 @@ export default function ListScreen() {
           contentContainerClassName="px-6 pb-8 gap-3"
           refreshing={refreshing}
           onRefresh={refresh}
+          ListHeaderComponent={
+            savedOutOfRange > 0 ? (
+              <View className="mb-1 rounded-xl bg-queue/15 px-4 py-2">
+                <Text className="font-medium text-label text-ink">
+                  {savedOutOfRange} saved{" "}
+                  {savedOutOfRange === 1 ? "station is" : "stations are"} outside the
+                  30 km range
+                </Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View className="items-center px-6 py-12">
               <Text className="text-center font-semibold text-body text-ink">
-                {filter === "all" ? "No stations nearby" : "Nothing matches this filter"}
+                {filter === "all"
+                  ? "No stations nearby"
+                  : filter === "saved"
+                    ? "No saved stations"
+                    : "Nothing matches this filter"}
               </Text>
               <Text className="mt-2 text-center font-sans text-caption text-muted">
                 {filter === "all"
                   ? "We could not find CNG stations within 30 km."
-                  : "Try the All filter to see every nearby station."}
+                  : filter === "saved"
+                    ? "Tap the heart on any station to keep it here."
+                    : "Try the All filter to see every nearby station."}
               </Text>
             </View>
           }
