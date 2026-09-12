@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { List, Map, User } from "lucide-react-native";
+import { List, Map, Trophy, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS } from "@/constants/colors";
@@ -40,9 +40,15 @@ export default function TabsLayout() {
         }}
       />
       {/* Favourites is not a tab: it is a filter on the List tab, over exactly
-          the same station data. That freed a slot for the leaderboard, and
-          profile/stats sit with settings under "You" rather than claiming
-          another one. */}
+          the same station data. That freed this slot, and profile/stats sit
+          with settings under "You" rather than claiming another one. */}
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: "Ranks",
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size} />,
+        }}
+      />
       <Tabs.Screen
         name="you"
         options={{

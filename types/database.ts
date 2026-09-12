@@ -139,6 +139,24 @@ export type PointTransactionRow = {
   created_at: string;
 }
 
+/** One row of this month's standings. Deliberately carries no auth_user_id --
+ *  nothing on screen needs it, and it is the handle to somebody's account. */
+export type LeaderboardRow = {
+  place: number;
+  driver_name: string;
+  driver_city: string | null;
+  points: number;
+  reports: number;
+  is_me: boolean;
+}
+
+export type MyPlaceRow = {
+  place: number;
+  points: number;
+  reports: number;
+  total_drivers: number;
+}
+
 export type UserPointsRow = {
   auth_user_id: string;
   total_points: number;
@@ -250,10 +268,20 @@ export interface Database {
         Args: { station: string; max_results?: number };
         Returns: StationReport[];
       };
+      leaderboard: {
+        Args: { max_results?: number };
+        Returns: LeaderboardRow[];
+      };
+      my_leaderboard_place: {
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Args: {};
+        Returns: MyPlaceRow[];
+      };
     };
     Enums: {
       station_status: StationStatus;
       confidence_level: ConfidenceLevel;
+      point_reason: PointReason;
     };
     // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     CompositeTypes: {};

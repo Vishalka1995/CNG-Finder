@@ -1,5 +1,9 @@
 import { supabase } from "@/lib/supabase";
-import type { UserPointsRow } from "@/types/database";
+import type { LeaderboardRow, MyPlaceRow, UserPointsRow } from "@/types/database";
+
+/** Matches the bound enforced by users_display_name_length (migration 0010). */
+export const DISPLAY_NAME_MIN = 2;
+export const DISPLAY_NAME_MAX = 20;
 
 /**
  * Reading the points a driver has earned.
@@ -56,5 +60,74 @@ export async function getMyPoints(): Promise<UserPointsRow | null> {
     return data;
   } catch {
     return null;
+  }
+}
+
+/** This month's standings. Empty until somebody scores. */
+export async function getLeaderboard(limit = 100): Promise<LeaderboardRow[]> {
+  try {
+    const { data, error } = await supabase.rpc("leaderboard", { max_results: limit });
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * The caller's own standing, or null when they have not scored this month.
+ * Separate from the list because they are usually outside the visible top 100.
+ */
+export async function getMyPlace(): Promise<MyPlaceRow | null> {
+  try {
+    const { data, error } = await supabase.rpc("my_leaderboard_place", {});
+    if (error || !data || data.length === 0) return null;
+    return data[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** The caller's chosen leaderboard name, or null if they have not set one. */
+export async function getDisplayName(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("display_name")
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data.display_name;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sets the name shown on the leaderboard. Returns an error message to show, or
+ * null on success -- the length bound is a database constraint, so a rejection
+ * here is the authority rather than a client-side guess.
+ */
+export async function setDisplayName(name: string): Promise<string | null> {
+  const trimmed = name.trim();
+
+  if (trimmed.length < DISPLAY_NAME_MIN || trimmed.length > DISPLAY_NAME_MAX) {
+    return `Pick a name between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters.`;
+  }
+
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    const uid = session.session?.user.id;
+    if (!uid) return "Could not verify your device. Check your connection.";
+
+    const { error } = await supabase
+      .from("users")
+      .update({ display_name: trimmed })
+      .eq("auth_user_id", uid);
+
+    if (error) return "Could not save that name. Please try again.";
+    return null;
+  } catch {
+    return "Could not save that name. Please try again.";
   }
 }
