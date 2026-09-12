@@ -16,6 +16,12 @@ export interface LocationResult {
   granted: boolean;
 }
 
+export interface PositionFix {
+  coords: Coords;
+  /** Radius in metres, when the platform reports one. */
+  accuracy: number | null;
+}
+
 /** Asks for foreground location permission. Never requests background access. */
 export async function requestLocationPermission(): Promise<boolean> {
   const { status } = await Location.requestForegroundPermissionsAsync();
@@ -66,6 +72,36 @@ export async function getRememberedCoords(): Promise<Coords | null> {
       return null;
     }
     return { latitude: parsed.latitude, longitude: parsed.longitude };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The platform's already-cached fix, if it is recent enough to trust. Returns
+ * immediately -- it never waits on the GPS hardware.
+ *
+ * This exists to seed the map's location puck. MapLibre's LocationManager
+ * replays a position to a new listener only when it already holds one, so on a
+ * cold start the puck sits invisible for however long the native provider
+ * takes to produce its first fix -- several seconds. Handing it a position we
+ * already have skips that wait. Capped by the same freshness rule as a live
+ * fix, so a cached position from a previous trip is never drawn as "you".
+ */
+export async function getLastKnownFix(): Promise<PositionFix | null> {
+  try {
+    const position = await Location.getLastKnownPositionAsync({
+      maxAge: MAX_FIX_AGE_MS,
+    });
+    if (!position) return null;
+
+    return {
+      coords: {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      },
+      accuracy: position.coords.accuracy ?? null,
+    };
   } catch {
     return null;
   }

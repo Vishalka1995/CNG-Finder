@@ -16,7 +16,7 @@ import type { NativeSyntheticEvent } from "react-native";
 
 import { LOCATION_DOT_COLOR, MAP_PIN_COLOR } from "@/constants/colors";
 import { DEFAULT_ZOOM, MAP_STYLES, type MapStyleId } from "@/constants/config";
-import type { Coords } from "@/lib/location";
+import type { Coords, PositionFix } from "@/lib/location";
 import type { NearbyStation } from "@/types/database";
 
 const LAYER_STATIONS = "station-points";
@@ -67,17 +67,26 @@ const USER_LOCATION_SOURCE = "user-location";
  * what prompted this. Mirrors the library's own UserLocationPuck structure
  * (accuracy halo + white ring + solid dot) with LOCATION_DOT_COLOR swapped in.
  */
-function UserLocationDot() {
+function UserLocationDot({ seed }: { seed?: PositionFix | null }) {
   const position = useCurrentPosition();
 
+  // MapLibre's own subscription can take several seconds to produce its first
+  // fix, and until then it reports nothing at all. `seed` is a position we
+  // already hold, so the puck is drawn straight away and simply switches over
+  // once live updates start arriving.
+  const latitude = position?.coords.latitude ?? seed?.coords.latitude;
+  const longitude = position?.coords.longitude ?? seed?.coords.longitude;
+  const accuracy = position?.coords.accuracy ?? seed?.accuracy ?? undefined;
+
   const lngLat = useMemo<[number, number] | undefined>(
-    () => (position ? [position.coords.longitude, position.coords.latitude] : undefined),
-    [position],
+    () =>
+      typeof latitude === "number" && typeof longitude === "number"
+        ? [longitude, latitude]
+        : undefined,
+    [latitude, longitude],
   );
 
   if (!lngLat) return null;
-
-  const accuracy = position?.coords.accuracy;
 
   return (
     <LayerAnnotation animated id={USER_LOCATION_SOURCE} lngLat={lngLat}>
@@ -132,6 +141,9 @@ interface StationMapProps {
   mapStyle?: MapStyleId;
   /** Lets a parent (the "locate me" button) fly the camera imperatively. */
   cameraRef?: RefObject<CameraRef | null>;
+  /** Draws the location puck immediately instead of waiting on MapLibre's
+   *  own first fix. See UserLocationDot. */
+  seedFix?: PositionFix | null;
 }
 
 /**
@@ -152,6 +164,7 @@ export function StationMap({
   onSelectStation,
   mapStyle = "streets",
   cameraRef: externalCameraRef,
+  seedFix,
 }: StationMapProps) {
   const internalCameraRef = useRef<CameraRef>(null);
   const cameraRef = externalCameraRef ?? internalCameraRef;
@@ -232,7 +245,7 @@ export function StationMap({
         }}
       />
 
-      {showUserLocation ? <UserLocationDot /> : null}
+      {showUserLocation ? <UserLocationDot seed={seedFix} /> : null}
 
       <Images images={{ "fuel-pin": { source: require("@/assets/map/fuel-icon.png"), sdf: true } }} />
 

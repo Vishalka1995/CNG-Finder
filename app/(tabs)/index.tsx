@@ -12,10 +12,12 @@ import { COLORS } from "@/constants/colors";
 import { BANGALORE_CENTER, DEFAULT_ZOOM, isMapConfigured } from "@/constants/config";
 import {
   getCurrentCoords,
+  getLastKnownFix,
   getRememberedCoords,
   hasLocationPermission,
   openDirections,
   type Coords,
+  type PositionFix,
 } from "@/lib/location";
 import { usePreferencesStore } from "@/stores/preferencesStore";
 import { useStationStore } from "@/stores/stationStore";
@@ -46,6 +48,8 @@ export default function MapScreen() {
    * back and the dot only appeared seconds after the map.
    */
   const [locationAllowed, setLocationAllowed] = useState(false);
+  /** Draws the puck right away rather than waiting on MapLibre's first fix. */
+  const [seedFix, setSeedFix] = useState<PositionFix | null>(null);
   /** Whether we know where to point the camera yet -- a local read, not GPS. */
   const [centerReady, setCenterReady] = useState(false);
   const [locating, setLocating] = useState(true);
@@ -112,6 +116,14 @@ export default function MapScreen() {
       // below, rather than after it.
       setLocationAllowed(allowed);
       setCenterReady(true);
+
+      // Cached fix, if recent enough. Returns without touching the GPS, so the
+      // puck can be drawn now instead of several seconds from now.
+      if (allowed) {
+        const known = await getLastKnownFix();
+        if (cancelled) return;
+        if (known) setSeedFix(known);
+      }
 
       const result = await getCurrentCoords();
       if (cancelled) return;
@@ -222,6 +234,7 @@ export default function MapScreen() {
         onSelectStation={setSelectedId}
         mapStyle={mapStyle}
         cameraRef={cameraRef}
+        seedFix={seedFix}
       />
 
       {/* Map controls, stacked below the header. Positioned from the header's
