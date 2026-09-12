@@ -1,7 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
 
-import { BANGALORE_CENTER } from "@/constants/config";
+import { BANGALORE_CENTER, STORAGE_KEYS } from "@/constants/config";
 
 export interface Coords {
   latitude: number;
@@ -26,47 +27,101 @@ export async function hasLocationPermission(): Promise<boolean> {
   return status === "granted";
 }
 
-async function tryGetPosition(): Promise<Coords | null> {
-  try {
-    const position = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
-  } catch {
-    return null;
-  }
-}
+/**
+ * A fix older than this is treated as no fix at all.
+ *
+ * Android's fused location provider will happily hand back a position cached
+ * from a previous trip, and it arrives looking exactly like a fresh one. In a
+ * single-city app that is harmless; here it means a driver standing in
+ * Kolhapur can be handed their last Bangalore fix and have the app search
+ * 400 km away -- every real station near them vanishes from the list.
+ */
+const MAX_FIX_AGE_MS = 5 * 60 * 1000;
 
 /** Retry delay for the first fix after permission is freshly granted -- the
  *  location provider is commonly still starting up at that point. */
 const FIRST_FIX_RETRY_MS = 1500;
 
 /**
- * Current position, falling back to the Bangalore centre when permission is
- * denied or the fix fails. Callers should surface `isFallback` so the user
- * understands why distances may look wrong.
+ * Remembers the last genuine fix so a later failure falls back to the city the
+ * driver was actually in. The hardcoded city centre is a poor fallback now
+ * that there is more than one city: it silently relocates the user.
+ */
+async function rememberCoords(coords: Coords): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.lastPosition, JSON.stringify(coords));
+  } catch {
+    // Non-fatal: the fix still holds for this session.
+  }
+}
+
+/** The last genuine fix from a previous run, if there is one. */
+export async function getRememberedCoords(): Promise<Coords | null> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.lastPosition);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<Coords>;
+    if (typeof parsed.latitude !== "number" || typeof parsed.longitude !== "number") {
+      return null;
+    }
+    return { latitude: parsed.latitude, longitude: parsed.longitude };
+  } catch {
+    return null;
+  }
+}
+
+async function tryGetPosition(): Promise<Coords | null> {
+  try {
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+
+    if (Date.now() - position.timestamp > MAX_FIX_AGE_MS) return null;
+
+    return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+  } catch {
+    return null;
+  }
+}
+
+async function fallbackCoords(): Promise<Coords> {
+  return (await getRememberedCoords()) ?? { ...BANGALORE_CENTER };
+}
+
+/**
+ * Current position, falling back to the last remembered fix (then the
+ * Bangalore centre) when permission is denied or no fresh fix is available.
+ * Callers should surface `isFallback` so the user understands why distances
+ * may look wrong.
  *
- * Retries once on failure: the very first fix right after permission is
- * granted (typically straight out of onboarding) commonly fails while the
- * location provider is still warming up, and without a retry the map would
- * silently stick with the fallback centre -- and no live-location dot -- for
- * the rest of the session.
+ * Retries once: the very first fix right after permission is granted
+ * (typically straight out of onboarding) commonly fails while the location
+ * provider is still warming up, and without a retry the map would silently
+ * stick with the fallback centre -- and no live-location dot -- all session.
  */
 export async function getCurrentCoords(): Promise<LocationResult> {
   const granted = await hasLocationPermission();
 
   if (!granted) {
-    return { coords: { ...BANGALORE_CENTER }, isFallback: true, granted: false };
+    return { coords: await fallbackCoords(), isFallback: true, granted: false };
   }
 
   const first = await tryGetPosition();
-  if (first) return { coords: first, isFallback: false, granted: true };
+  if (first) {
+    void rememberCoords(first);
+    return { coords: first, isFallback: false, granted: true };
+  }
 
   await new Promise((resolve) => setTimeout(resolve, FIRST_FIX_RETRY_MS));
-  const retry = await tryGetPosition();
-  if (retry) return { coords: retry, isFallback: false, granted: true };
 
-  return { coords: { ...BANGALORE_CENTER }, isFallback: true, granted: true };
+  const retry = await tryGetPosition();
+  if (retry) {
+    void rememberCoords(retry);
+    return { coords: retry, isFallback: false, granted: true };
+  }
+
+  return { coords: await fallbackCoords(), isFallback: true, granted: true };
 }
 
 const EARTH_RADIUS_M = 6_371_000;

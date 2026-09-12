@@ -80,6 +80,7 @@ export const STORAGE_KEYS = {
   deviceId: "cngnow.device_id",
   onboarded: "cngnow.onboarded",
   cachedStations: "cngnow.cached_stations",
+  lastPosition: "cngnow.last_position",
   recentSearches: "cngnow.recent_searches",
   favorites: "cngnow.favorites",
 } as const;

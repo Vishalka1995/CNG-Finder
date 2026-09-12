@@ -9,9 +9,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StationMap } from "@/components/map/StationMap";
 import { NearbyStationRow } from "@/components/station/NearbyStationRow";
 import { COLORS } from "@/constants/colors";
-import { BANGALORE_CENTER, isMapConfigured } from "@/constants/config";
+import { BANGALORE_CENTER, DEFAULT_ZOOM, isMapConfigured } from "@/constants/config";
 import {
   getCurrentCoords,
+  getRememberedCoords,
   openDirections,
   type Coords,
 } from "@/lib/location";
@@ -38,6 +39,8 @@ const LOCATE_ZOOM = 15;
 export default function MapScreen() {
   const [center, setCenter] = useState<Coords>({ ...BANGALORE_CENTER });
   const [hasLocation, setHasLocation] = useState(false);
+  /** Whether we know where to point the camera yet -- a local read, not GPS. */
+  const [centerReady, setCenterReady] = useState(false);
   const [locating, setLocating] = useState(true);
 
   const router = useRouter();
@@ -85,13 +88,37 @@ export default function MapScreen() {
     let cancelled = false;
 
     const init = async (): Promise<void> => {
-      await Promise.all([loadCached(), loadPreferences()]);
+      // Point the camera from local storage first. This is a few milliseconds,
+      // where a GPS fix can take seconds or fail outright -- gating the whole
+      // screen on the fix is what made the station list vanish behind the
+      // spinner while location was still being resolved.
+      const [remembered] = await Promise.all([
+        getRememberedCoords(),
+        loadCached(),
+        loadPreferences(),
+      ]);
+      if (cancelled) return;
+
+      if (remembered) setCenter(remembered);
+      setCenterReady(true);
+
       const result = await getCurrentCoords();
       if (cancelled) return;
 
       setCenter(result.coords);
       setHasLocation(!result.isFallback);
       setLocating(false);
+
+      // The camera is already mounted by now, so move it explicitly --
+      // initialViewState only applies on mount.
+      if (!result.isFallback) {
+        cameraRef.current?.flyTo({
+          center: [result.coords.longitude, result.coords.latitude],
+          zoom: DEFAULT_ZOOM,
+          duration: 500,
+        });
+      }
+
       await fetchNearby(result.coords);
     };
 
@@ -165,11 +192,13 @@ export default function MapScreen() {
     );
   }
 
-  if (locating) {
+  // Only blocks on the local position read, never on GPS -- see the init
+  // effect. Once the camera has somewhere to point, the map and the station
+  // list stay on screen while location resolves in the background.
+  if (!centerReady) {
     return (
       <View className="flex-1 items-center justify-center bg-surface">
         <ActivityIndicator color={COLORS.primary} />
-        <Text className="mt-3 font-sans text-caption text-muted">Finding you…</Text>
       </View>
     );
   }
@@ -213,7 +242,7 @@ export default function MapScreen() {
           disabled={locatingMe}
           className="h-11 w-11 items-center justify-center rounded-xl bg-white shadow active:opacity-70"
         >
-          {locatingMe ? (
+          {locatingMe || locating ? (
             <ActivityIndicator color={COLORS.primary} size="small" />
           ) : (
             <LocateFixed color={COLORS.ink} size={20} />
