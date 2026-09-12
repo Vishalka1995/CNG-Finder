@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { NameDialog } from "@/components/points/NameDialog";
 import { COLORS } from "@/constants/colors";
 import { getDisplayName, getLeaderboard, getMyPlace } from "@/lib/points";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 import type { LeaderboardRow, MyPlaceRow } from "@/types/database";
 
 /** IST, to match the period the database scores against. */
@@ -73,7 +74,15 @@ export default function LeaderboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [editingName, setEditingName] = useState(false);
 
+  const loadPreferences = usePreferencesStore((state) => state.load);
+  const showcaseMode = usePreferencesStore((state) => state.showcaseMode);
+
   const load = useCallback(async (): Promise<void> => {
+    // Showcase mode lives in preferences, and this tab can be the first one
+    // opened after a cold start -- reading it before the load finishes would
+    // show the real (empty) board during a demo.
+    await loadPreferences();
+
     const [board, place, displayName] = await Promise.all([
       getLeaderboard(),
       getMyPlace(),
@@ -84,7 +93,7 @@ export default function LeaderboardScreen() {
     setMyPlace(place);
     setName(displayName);
     setIsLoading(false);
-  }, []);
+  }, [loadPreferences]);
 
   useFocusEffect(
     useCallback(() => {
@@ -121,6 +130,14 @@ export default function LeaderboardScreen() {
         <Text className="mt-1 font-sans text-caption text-muted">
           {monthLabel()} — {days} {days === 1 ? "day" : "days"} left
         </Text>
+
+        {showcaseMode ? (
+          <View className="mt-3 rounded-xl bg-queue/15 px-4 py-2">
+            <Text className="font-medium text-label text-ink">
+              Showcase mode — these standings are sample data
+            </Text>
+          </View>
+        ) : null}
 
         {/* The name is only worth prompting for once there is a board to appear
             on, so it is offered here rather than during onboarding. */}

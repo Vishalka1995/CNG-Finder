@@ -22,11 +22,15 @@ const STORAGE_KEY = "cngnow.preferences";
 interface Preferences {
   notificationsEnabled: boolean;
   mapStyle: MapStyleId;
+  /** Synthesises statuses, points and standings on-device for demos. Never
+   *  writes to the backend -- see lib/showcase.ts. */
+  showcaseMode: boolean;
 }
 
 const DEFAULTS: Preferences = {
   notificationsEnabled: true,
   mapStyle: DEFAULT_MAP_STYLE,
+  showcaseMode: false,
 };
 
 interface PreferencesState extends Preferences {
@@ -34,6 +38,7 @@ interface PreferencesState extends Preferences {
   load: () => Promise<void>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   setMapStyle: (style: MapStyleId) => Promise<void>;
+  setShowcaseMode: (enabled: boolean) => Promise<void>;
 }
 
 /** Narrows unknown parsed JSON to a full Preferences object, field by field. */
@@ -50,6 +55,10 @@ function coerce(parsed: unknown): Preferences {
       value.mapStyle === "streets" || value.mapStyle === "satellite"
         ? value.mapStyle
         : DEFAULTS.mapStyle,
+    showcaseMode:
+      typeof value.showcaseMode === "boolean"
+        ? value.showcaseMode
+        : DEFAULTS.showcaseMode,
   };
 }
 
@@ -59,11 +68,15 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
    * partial object would silently drop the others on the next load.
    */
   const persist = async (): Promise<void> => {
-    const { notificationsEnabled, mapStyle } = get();
+    const { notificationsEnabled, mapStyle, showcaseMode } = get();
     try {
       await AsyncStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ notificationsEnabled, mapStyle } satisfies Preferences),
+        JSON.stringify({
+          notificationsEnabled,
+          mapStyle,
+          showcaseMode,
+        } satisfies Preferences),
       );
     } catch {
       // Non-fatal: the in-memory value still holds for this session.
@@ -90,6 +103,11 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
 
     setMapStyle: async (style) => {
       set({ mapStyle: style });
+      await persist();
+    },
+
+    setShowcaseMode: async (enabled) => {
+      set({ showcaseMode: enabled });
       await persist();
     },
   };

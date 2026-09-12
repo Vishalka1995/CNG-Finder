@@ -60,6 +60,7 @@ export default function MapScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const mapStyle = usePreferencesStore((state) => state.mapStyle);
+  const showcaseMode = usePreferencesStore((state) => state.showcaseMode);
   const setMapStyle = usePreferencesStore((state) => state.setMapStyle);
   const loadPreferences = usePreferencesStore((state) => state.load);
 
@@ -299,6 +300,17 @@ export default function MapScreen() {
           <View className="mx-4 mt-2 rounded-xl bg-queue/15 px-4 py-2">
             <Text className="font-medium text-label text-ink">
               Demo data — connect Supabase to see real stations
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Real stations, invented availability. Saying so is not optional:
+            an unmarked fake "available" is the one thing this app must never
+            show a driver. */}
+        {showcaseMode ? (
+          <View className="mx-4 mt-2 rounded-xl bg-queue/15 px-4 py-2">
+            <Text className="font-medium text-label text-ink">
+              Showcase mode — station availability is sample data
             </Text>
           </View>
         ) : null}

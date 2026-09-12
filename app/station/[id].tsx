@@ -31,8 +31,10 @@ import {
   openDirections as openStationDirections,
 } from "@/lib/location";
 import { getPointsForReport } from "@/lib/points";
+import { showcaseReports } from "@/lib/showcase";
 import { parseReportError, supabase, toPointWKT } from "@/lib/supabase";
 import { useFavoriteStore } from "@/stores/favoriteStore";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 import { useReportStore } from "@/stores/reportStore";
 import { useStationStore } from "@/stores/stationStore";
 import { showToast } from "@/stores/toastStore";
@@ -118,6 +120,15 @@ export default function StationDetailScreen() {
   /** Shared by the mount effect and pull-to-refresh; never itself cancelled. */
   const loadReports = useCallback(
     async (stationId: string, isCancelled: () => boolean = () => false): Promise<void> => {
+      if (usePreferencesStore.getState().showcaseMode) {
+        if (!isCancelled()) {
+          setReports(showcaseReports(stationId));
+          setReportsError(null);
+          setLoadingReports(false);
+        }
+        return;
+      }
+
       if (isDemoMode()) {
         if (!isCancelled()) {
           setReports(getDemoReports(stationId).slice(0, 5));

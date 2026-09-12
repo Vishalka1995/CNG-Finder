@@ -11,7 +11,9 @@ import {
 import { summarize } from "@/lib/confidence";
 import { addDemoReport, getDemoReports, getDemoStations } from "@/lib/demoData";
 import type { Coords } from "@/lib/location";
+import { showcaseStations } from "@/lib/showcase";
 import { supabase } from "@/lib/supabase";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 import type { NearbyStation, StationStatus } from "@/types/database";
 
 interface StationState {
@@ -100,7 +102,12 @@ export const useStationStore = create<StationState>((set, get) => ({
 
       if (error) throw new Error(error.message);
 
-      const stations = data ?? [];
+      // Showcase mode keeps the real stations and their real coordinates, and
+      // only invents the crowd-sourced half -- so a demo shows the actual
+      // network, not a fictional city. See lib/showcase.ts.
+      const stations = usePreferencesStore.getState().showcaseMode
+        ? showcaseStations(data ?? [])
+        : (data ?? []);
 
       // A fetch that comes back empty should not erase a list that was
       // already showing -- on cold start this is called with whatever GPS

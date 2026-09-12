@@ -1,5 +1,19 @@
+import {
+  SHOWCASE_BADGES,
+  SHOWCASE_MY_PLACE,
+  SHOWCASE_POINTS,
+  showcaseLeaderboard,
+} from "@/lib/showcase";
 import { supabase } from "@/lib/supabase";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 import type { LeaderboardRow, MyPlaceRow, UserPointsRow } from "@/types/database";
+
+/**
+ * Read outside React on purpose: these are plain async functions, not hooks,
+ * and threading a flag down through every caller would put a demo concern into
+ * signatures that have nothing to do with demos.
+ */
+const isShowcase = (): boolean => usePreferencesStore.getState().showcaseMode;
 
 /** Matches the bound enforced by users_display_name_length (migration 0010). */
 export const DISPLAY_NAME_MIN = 2;
@@ -49,6 +63,8 @@ export async function getPointsForReport(reportId: string): Promise<number | nul
  * one driver's totals away from another's, which it is not.
  */
 export async function getMyPoints(): Promise<UserPointsRow | null> {
+  if (isShowcase()) return SHOWCASE_POINTS;
+
   try {
     const { data, error } = await supabase
       .from("user_points")
@@ -65,6 +81,8 @@ export async function getMyPoints(): Promise<UserPointsRow | null> {
 
 /** Ids of the badges this device has earned. */
 export async function getMyBadges(): Promise<string[]> {
+  if (isShowcase()) return SHOWCASE_BADGES;
+
   try {
     const { data, error } = await supabase.from("badges").select("badge_id");
     if (error || !data) return [];
@@ -76,6 +94,8 @@ export async function getMyBadges(): Promise<string[]> {
 
 /** This month's standings. Empty until somebody scores. */
 export async function getLeaderboard(limit = 100): Promise<LeaderboardRow[]> {
+  if (isShowcase()) return showcaseLeaderboard(await getDisplayName());
+
   try {
     const { data, error } = await supabase.rpc("leaderboard", { max_results: limit });
     if (error || !data) return [];
@@ -90,6 +110,8 @@ export async function getLeaderboard(limit = 100): Promise<LeaderboardRow[]> {
  * Separate from the list because they are usually outside the visible top 100.
  */
 export async function getMyPlace(): Promise<MyPlaceRow | null> {
+  if (isShowcase()) return SHOWCASE_MY_PLACE;
+
   try {
     const { data, error } = await supabase.rpc("my_leaderboard_place", {});
     if (error || !data || data.length === 0) return null;

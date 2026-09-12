@@ -10,9 +10,11 @@ import { PointsCard } from "@/components/points/PointsCard";
 import { COLORS } from "@/constants/colors";
 import { isDemoMode } from "@/constants/config";
 import { getDeviceId } from "@/lib/device";
+import { getCurrentCoords } from "@/lib/location";
 import { getMyBadges, getMyPoints } from "@/lib/points";
 import { supabase } from "@/lib/supabase";
 import { usePreferencesStore } from "@/stores/preferencesStore";
+import { useStationStore } from "@/stores/stationStore";
 import type { UserPointsRow } from "@/types/database";
 
 const FEEDBACK_EMAIL = "vishal.a@flatworldsolutions.com";
@@ -75,8 +77,26 @@ export default function YouScreen() {
   const [badges, setBadges] = useState<string[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(true);
 
-  const { notificationsEnabled, load: loadPreferences, setNotificationsEnabled } =
-    usePreferencesStore();
+  const {
+    notificationsEnabled,
+    showcaseMode,
+    load: loadPreferences,
+    setNotificationsEnabled,
+    setShowcaseMode,
+  } = usePreferencesStore();
+
+  const fetchNearby = useStationStore((state) => state.fetchNearby);
+
+  /** Station statuses are synthesised at fetch time, so flipping the switch
+   *  has to refetch or the map keeps whatever it already had. */
+  const enableShowcase = async (value: boolean): Promise<void> => {
+    await setShowcaseMode(value);
+    const fix = await getCurrentCoords();
+    await fetchNearby(fix.coords, true);
+    const [result, earned] = await Promise.all([getMyPoints(), getMyBadges()]);
+    setPoints(result);
+    setBadges(earned);
+  };
 
   useEffect(() => {
     void getDeviceId().then(setDeviceId);
@@ -220,6 +240,26 @@ export default function YouScreen() {
         {showDiagnostics ? (
           <View className="mt-3 rounded-2xl bg-slate-50 p-4">
             <Text className="font-semibold text-label text-ink">Diagnostics</Text>
+
+            {/* Behind the version tap on purpose: useful for demos, confusing
+                if a driver switches it on and then trusts what it shows. */}
+            <View className="mt-3 flex-row items-center">
+              <View className="flex-1 pr-3">
+                <Text className="font-sans text-caption text-ink">Showcase mode</Text>
+                <Text className="mt-0.5 font-sans text-label text-muted">
+                  Fills the app with sample activity for demos. On-device only —
+                  nothing is saved or sent.
+                </Text>
+              </View>
+              <Switch
+                value={showcaseMode}
+                onValueChange={(value) => void enableShowcase(value)}
+                trackColor={{ false: "#E2E8F0", true: COLORS.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View className="my-3 h-px bg-slate-200" />
 
             <Text className="mt-3 font-sans text-label text-muted">Device ID</Text>
             <Text className="font-sans text-label text-ink" selectable>
