@@ -1,6 +1,6 @@
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { ChevronRight, Layers, Plus, Search } from "lucide-react-native";
+import { ChevronRight, Layers, RefreshCw, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -166,10 +166,9 @@ export default function MapScreen() {
         </Pressable>
       </SafeAreaView>
 
-      {/* Header. A map has no scroll gesture to hook pull-to-refresh into, so
-          the station count doubles as a manual refresh target. "Add station"
-          lives here rather than as a floating button, because the sheet now
-          owns the bottom of the screen at every snap position. */}
+      {/* Header. Just the search entry point -- station count and refresh live
+          in the sheet's own header below, and "Add station" lives on the List
+          tab, where browsing everything makes a gap more obvious. */}
       <SafeAreaView className="absolute left-0 right-0 top-0" edges={["top"]}>
         <View className="mx-4 mt-2 flex-row items-center gap-2">
           <Pressable
@@ -181,31 +180,6 @@ export default function MapScreen() {
             <Search color={COLORS.muted} size={18} />
             <Text className="ml-3 flex-1 font-sans text-body text-muted">
               Search CNG stations
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add a missing station"
-            onPress={() => router.push("/add-station")}
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow active:opacity-80"
-          >
-            <Plus color="#FFFFFF" size={22} />
-          </Pressable>
-        </View>
-
-        <View className="mx-4 mt-2 flex-row items-center justify-between rounded-2xl bg-white px-4 py-2 shadow">
-          <Text className="font-semibold text-caption text-ink">CNG Now</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Refresh nearby stations"
-            disabled={isLoading}
-            onPress={() => void fetchNearby(center, true)}
-            hitSlop={8}
-            className="active:opacity-60"
-          >
-            <Text className="font-sans text-label text-muted">
-              {isLoading ? "Updating…" : `${stations.length} nearby · tap to refresh`}
             </Text>
           </Pressable>
         </View>
@@ -241,13 +215,30 @@ export default function MapScreen() {
         snapPoints={snapPoints}
         handleIndicatorStyle={{ backgroundColor: COLORS.unknown }}
       >
-        <View className="border-b border-slate-100 px-4 pb-2">
-          <Text className="font-semibold text-body text-ink">Nearby stations</Text>
-          <Text className="mt-0.5 font-sans text-label text-muted">
-            {stations.length > 0
-              ? `Closest ${Math.min(NEARBY_COUNT, stations.length)} of ${stations.length}`
-              : "Nothing in range"}
-          </Text>
+        <View className="flex-row items-center justify-between border-b border-slate-100 px-4 pb-2">
+          <View>
+            <Text className="font-semibold text-body text-ink">Nearby stations</Text>
+            <Text className="mt-0.5 font-sans text-label text-muted">
+              {stations.length > 0
+                ? `Closest ${Math.min(NEARBY_COUNT, stations.length)} of ${stations.length}`
+                : "Nothing in range"}
+            </Text>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Refresh nearby stations"
+            disabled={isLoading}
+            onPress={() => void fetchNearby(center, true)}
+            hitSlop={8}
+            className="h-9 w-9 items-center justify-center rounded-full active:opacity-60"
+          >
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.muted} size="small" />
+            ) : (
+              <RefreshCw color={COLORS.muted} size={18} />
+            )}
+          </Pressable>
         </View>
 
         <BottomSheetFlatList

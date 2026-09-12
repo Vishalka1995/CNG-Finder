@@ -156,7 +156,7 @@ export function StationMap({
         }}
       />
 
-      {showUserLocation ? <UserLocation animated /> : null}
+      {showUserLocation ? <UserLocation animated accuracy /> : null}
 
       <Images images={{ "fuel-pin": { source: require("@/assets/map/fuel-icon.png"), sdf: true } }} />
 

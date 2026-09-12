@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Search } from "lucide-react-native";
+import { Plus, Search } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -61,14 +61,25 @@ export default function ListScreen() {
         <View className="flex-row items-center justify-between">
           <Text className="font-bold text-title text-ink">Stations</Text>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Search stations"
-            onPress={() => router.push("/search")}
-            className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 active:opacity-60"
-          >
-            <Search color={COLORS.ink} size={18} />
-          </Pressable>
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Search stations"
+              onPress={() => router.push("/search")}
+              className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 active:opacity-60"
+            >
+              <Search color={COLORS.ink} size={18} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Add a missing station"
+              onPress={() => router.push("/add-station")}
+              className="h-10 w-10 items-center justify-center rounded-full bg-primary active:opacity-80"
+            >
+              <Plus color="#FFFFFF" size={18} />
+            </Pressable>
+          </View>
         </View>
 
         {isDemo ? (
