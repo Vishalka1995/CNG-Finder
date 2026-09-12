@@ -139,6 +139,12 @@ export type PointTransactionRow = {
   created_at: string;
 }
 
+export type BadgeRow = {
+  auth_user_id: string;
+  badge_id: string;
+  earned_at: string;
+}
+
 /** One row of this month's standings. Deliberately carries no auth_user_id --
  *  nothing on screen needs it, and it is the handle to somebody's account. */
 export type LeaderboardRow = {
@@ -245,6 +251,14 @@ export interface Database {
       };
       user_points: {
         Row: UserPointsRow;
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Insert: {};
+        // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+        Update: {};
+        Relationships: [];
+      };
+      badges: {
+        Row: BadgeRow;
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         Insert: {};
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type

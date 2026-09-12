@@ -63,6 +63,17 @@ export async function getMyPoints(): Promise<UserPointsRow | null> {
   }
 }
 
+/** Ids of the badges this device has earned. */
+export async function getMyBadges(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase.from("badges").select("badge_id");
+    if (error || !data) return [];
+    return data.map((row) => row.badge_id);
+  } catch {
+    return [];
+  }
+}
+
 /** This month's standings. Empty until somebody scores. */
 export async function getLeaderboard(limit = 100): Promise<LeaderboardRow[]> {
   try {

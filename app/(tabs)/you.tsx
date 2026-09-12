@@ -5,11 +5,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Share, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BadgeGrid } from "@/components/points/BadgeGrid";
 import { PointsCard } from "@/components/points/PointsCard";
 import { COLORS } from "@/constants/colors";
 import { isDemoMode } from "@/constants/config";
 import { getDeviceId } from "@/lib/device";
-import { getMyPoints } from "@/lib/points";
+import { getMyBadges, getMyPoints } from "@/lib/points";
 import { supabase } from "@/lib/supabase";
 import { usePreferencesStore } from "@/stores/preferencesStore";
 import type { UserPointsRow } from "@/types/database";
@@ -71,6 +72,7 @@ export default function YouScreen() {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const [points, setPoints] = useState<UserPointsRow | null>(null);
+  const [badges, setBadges] = useState<string[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(true);
 
   const { notificationsEnabled, load: loadPreferences, setNotificationsEnabled } =
@@ -92,9 +94,10 @@ export default function YouScreen() {
       let cancelled = false;
 
       const load = async (): Promise<void> => {
-        const result = await getMyPoints();
+        const [result, earned] = await Promise.all([getMyPoints(), getMyBadges()]);
         if (cancelled) return;
         setPoints(result);
+        setBadges(earned);
         setLoadingPoints(false);
       };
 
@@ -138,6 +141,11 @@ export default function YouScreen() {
         <Text className="mt-6 font-semibold text-caption text-muted">YOUR POINTS</Text>
 
         <PointsCard points={points} isLoading={loadingPoints} />
+
+        {/* Badges */}
+        <Text className="mt-8 font-semibold text-caption text-muted">BADGES</Text>
+
+        <BadgeGrid earnedIds={badges} />
 
         {/* About the app */}
         <Text className="mt-8 font-semibold text-caption text-muted">HOW IT WORKS</Text>
