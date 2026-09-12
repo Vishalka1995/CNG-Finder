@@ -13,6 +13,7 @@ import { BANGALORE_CENTER, DEFAULT_ZOOM, isMapConfigured } from "@/constants/con
 import {
   getCurrentCoords,
   getRememberedCoords,
+  hasLocationPermission,
   openDirections,
   type Coords,
 } from "@/lib/location";
@@ -38,7 +39,13 @@ const LOCATE_ZOOM = 15;
  */
 export default function MapScreen() {
   const [center, setCenter] = useState<Coords>({ ...BANGALORE_CENTER });
-  const [hasLocation, setHasLocation] = useState(false);
+  /**
+   * Whether we may draw the location puck. Deliberately keyed on permission,
+   * not on our own fix succeeding: MapLibre's puck runs its own location
+   * subscription, so gating it on our fix ran the two acquisitions back to
+   * back and the dot only appeared seconds after the map.
+   */
+  const [locationAllowed, setLocationAllowed] = useState(false);
   /** Whether we know where to point the camera yet -- a local read, not GPS. */
   const [centerReady, setCenterReady] = useState(false);
   const [locating, setLocating] = useState(true);
@@ -92,21 +99,24 @@ export default function MapScreen() {
       // where a GPS fix can take seconds or fail outright -- gating the whole
       // screen on the fix is what made the station list vanish behind the
       // spinner while location was still being resolved.
-      const [remembered] = await Promise.all([
+      const [remembered, allowed] = await Promise.all([
         getRememberedCoords(),
+        hasLocationPermission(),
         loadCached(),
         loadPreferences(),
       ]);
       if (cancelled) return;
 
       if (remembered) setCenter(remembered);
+      // Lets MapLibre start acquiring for the puck in parallel with the fix
+      // below, rather than after it.
+      setLocationAllowed(allowed);
       setCenterReady(true);
 
       const result = await getCurrentCoords();
       if (cancelled) return;
 
       setCenter(result.coords);
-      setHasLocation(!result.isFallback);
       setLocating(false);
 
       // The camera is already mounted by now, so move it explicitly --
@@ -146,7 +156,7 @@ export default function MapScreen() {
       }
 
       setCenter(fix.coords);
-      setHasLocation(true);
+      setLocationAllowed(true);
       cameraRef.current?.flyTo({
         center: [fix.coords.longitude, fix.coords.latitude],
         zoom: LOCATE_ZOOM,
@@ -208,7 +218,7 @@ export default function MapScreen() {
       <StationMap
         stations={stations}
         center={center}
-        showUserLocation={hasLocation}
+        showUserLocation={locationAllowed}
         onSelectStation={setSelectedId}
         mapStyle={mapStyle}
         cameraRef={cameraRef}
@@ -301,6 +311,14 @@ export default function MapScreen() {
         ref={sheetRef}
         index={1}
         snapPoints={snapPoints}
+        // Must be off. It defaults to ON in v5, which appends a FOURTH detent
+        // measured from the content height, re-sorts the list, and leaves
+        // `index` pointing at whichever detent now sits in that slot. Because
+        // the content height changes as rows load, the sheet re-derived its
+        // own size and animated away mid-load -- the list appearing for a
+        // second and then collapsing. We supply exact snap points; we want
+        // exactly those three.
+        enableDynamicSizing={false}
         handleIndicatorStyle={{ backgroundColor: COLORS.unknown }}
       >
         <View className="flex-row items-center justify-between border-b border-slate-100 px-4 pb-2">
