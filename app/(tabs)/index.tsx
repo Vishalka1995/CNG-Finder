@@ -7,9 +7,16 @@ import { ActivityIndicator, Pressable, Text, View, type LayoutChangeEvent } from
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StationMap } from "@/components/map/StationMap";
+import { AtStationPrompt } from "@/components/station/AtStationPrompt";
 import { NearbyStationRow } from "@/components/station/NearbyStationRow";
+import { ReportingTip } from "@/components/station/ReportingTip";
 import { COLORS } from "@/constants/colors";
-import { BANGALORE_CENTER, DEFAULT_ZOOM, isMapConfigured } from "@/constants/config";
+import {
+  BANGALORE_CENTER,
+  DEFAULT_ZOOM,
+  REPORT_PROXIMITY_M,
+  isMapConfigured,
+} from "@/constants/config";
 import {
   getCurrentCoords,
   getLastKnownFix,
@@ -61,6 +68,12 @@ export default function MapScreen() {
 
   const mapStyle = usePreferencesStore((state) => state.mapStyle);
   const showcaseMode = usePreferencesStore((state) => state.showcaseMode);
+  const reportingTipDismissed = usePreferencesStore(
+    (state) => state.reportingTipDismissed,
+  );
+  const dismissReportingTip = usePreferencesStore(
+    (state) => state.dismissReportingTip,
+  );
   const setMapStyle = usePreferencesStore((state) => state.setMapStyle);
   const loadPreferences = usePreferencesStore((state) => state.load);
 
@@ -95,6 +108,11 @@ export default function MapScreen() {
     () => (pinned ? [pinned, ...nearest] : nearest),
     [pinned, nearest],
   );
+
+  // The one station a report would actually be accepted for. Everything else
+  // is out of range, and the database would reject it -- see AtStationPrompt.
+  const atStation =
+    nearest[0] && nearest[0].distance_m <= REPORT_PROXIMITY_M ? nearest[0] : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -346,6 +364,18 @@ export default function MapScreen() {
         enableDynamicSizing={false}
         handleIndicatorStyle={{ backgroundColor: COLORS.unknown }}
       >
+        {/* One slot, whichever is relevant. At a station, ask about that
+            station; otherwise explain that reporting exists at all, once. */}
+        {atStation ? (
+          <View className="px-4 pb-3">
+            <AtStationPrompt station={atStation} onPress={() => openStation(atStation.id)} />
+          </View>
+        ) : !reportingTipDismissed ? (
+          <View className="px-4 pb-3">
+            <ReportingTip onDismiss={() => void dismissReportingTip()} />
+          </View>
+        ) : null}
+
         <View className="flex-row items-center justify-between border-b border-slate-100 px-4 pb-2">
           <View>
             <Text className="font-semibold text-body text-ink">Nearby stations</Text>

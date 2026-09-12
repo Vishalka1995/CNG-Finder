@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AtStationPrompt } from "@/components/station/AtStationPrompt";
 import { StationCard } from "@/components/station/StationCard";
 import { COLORS } from "@/constants/colors";
+import { REPORT_PROXIMITY_M } from "@/constants/config";
 import { getCurrentCoords } from "@/lib/location";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
@@ -65,6 +67,15 @@ export default function ListScreen() {
   const savedOutOfRange =
     filter === "saved" ? favoriteIds.length - visible.length : 0;
 
+  // Measured against the whole list, not the filtered view: standing at a
+  // station is a fact about where you are, and it should not disappear
+  // because a filter happens to exclude that station.
+  const nearest = useMemo(
+    () => [...stations].sort((a, b) => a.distance_m - b.distance_m)[0],
+    [stations],
+  );
+  const atStation = nearest && nearest.distance_m <= REPORT_PROXIMITY_M ? nearest : null;
+
   const refresh = async (): Promise<void> => {
     setRefreshing(true);
     try {
@@ -109,6 +120,17 @@ export default function ListScreen() {
           </Text>
         ) : null}
       </View>
+
+      {atStation ? (
+        <View className="px-6 pb-3">
+          <AtStationPrompt
+            station={atStation}
+            onPress={() =>
+              router.push({ pathname: "/station/[id]", params: { id: atStation.id } })
+            }
+          />
+        </View>
+      ) : null}
 
       {/* Filter chips */}
       <View className="flex-row gap-2 px-6 pb-3">

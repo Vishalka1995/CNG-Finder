@@ -25,12 +25,15 @@ interface Preferences {
   /** Synthesises statuses, points and standings on-device for demos. Never
    *  writes to the backend -- see lib/showcase.ts. */
   showcaseMode: boolean;
+  /** Hides the one-time "reports come from drivers" card once dismissed. */
+  reportingTipDismissed: boolean;
 }
 
 const DEFAULTS: Preferences = {
   notificationsEnabled: true,
   mapStyle: DEFAULT_MAP_STYLE,
   showcaseMode: false,
+  reportingTipDismissed: false,
 };
 
 interface PreferencesState extends Preferences {
@@ -39,6 +42,7 @@ interface PreferencesState extends Preferences {
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   setMapStyle: (style: MapStyleId) => Promise<void>;
   setShowcaseMode: (enabled: boolean) => Promise<void>;
+  dismissReportingTip: () => Promise<void>;
 }
 
 /** Narrows unknown parsed JSON to a full Preferences object, field by field. */
@@ -59,6 +63,10 @@ function coerce(parsed: unknown): Preferences {
       typeof value.showcaseMode === "boolean"
         ? value.showcaseMode
         : DEFAULTS.showcaseMode,
+    reportingTipDismissed:
+      typeof value.reportingTipDismissed === "boolean"
+        ? value.reportingTipDismissed
+        : DEFAULTS.reportingTipDismissed,
   };
 }
 
@@ -68,7 +76,8 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
    * partial object would silently drop the others on the next load.
    */
   const persist = async (): Promise<void> => {
-    const { notificationsEnabled, mapStyle, showcaseMode } = get();
+    const { notificationsEnabled, mapStyle, showcaseMode, reportingTipDismissed } =
+      get();
     try {
       await AsyncStorage.setItem(
         STORAGE_KEY,
@@ -76,6 +85,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
           notificationsEnabled,
           mapStyle,
           showcaseMode,
+          reportingTipDismissed,
         } satisfies Preferences),
       );
     } catch {
@@ -108,6 +118,11 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
 
     setShowcaseMode: async (enabled) => {
       set({ showcaseMode: enabled });
+      await persist();
+    },
+
+    dismissReportingTip: async () => {
+      set({ reportingTipDismissed: true });
       await persist();
     },
   };
