@@ -16,12 +16,11 @@ import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 
 import { Toast } from "@/components/ui/Toast";
-import { STORAGE_KEYS } from "@/constants/config";
 import { ensureSession } from "@/lib/device";
+import { useOnboardingStore } from "@/stores/onboardingStore";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -34,7 +33,8 @@ export default function RootLayout() {
   });
 
   const [bootstrapped, setBootstrapped] = useState(false);
-  const [hasOnboarded, setHasOnboarded] = useState(false);
+  const hasOnboarded = useOnboardingStore((state) => state.hasOnboarded);
+  const loadOnboarding = useOnboardingStore((state) => state.load);
 
   const router = useRouter();
   const segments = useSegments();
@@ -46,26 +46,20 @@ export default function RootLayout() {
     let cancelled = false;
 
     const bootstrap = async (): Promise<void> => {
-      const [onboardedFlag, session] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.onboarded).catch(() => null),
-        ensureSession(),
-      ]);
+      const [, session] = await Promise.all([loadOnboarding(), ensureSession()]);
 
       if (!session.ok) {
         console.warn("[bootstrap] anonymous session unavailable:", session.error);
       }
 
-      if (!cancelled) {
-        setHasOnboarded(onboardedFlag === "true");
-        setBootstrapped(true);
-      }
+      if (!cancelled) setBootstrapped(true);
     };
 
     void bootstrap();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadOnboarding]);
 
   const ready = bootstrapped && (fontsLoaded || fontError !== null);
 

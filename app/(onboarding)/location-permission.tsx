@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { MapPin } from "lucide-react-native";
 import { useState } from "react";
@@ -7,8 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors";
-import { STORAGE_KEYS } from "@/constants/config";
 import { requestLocationPermission } from "@/lib/location";
+import { useOnboardingStore } from "@/stores/onboardingStore";
 
 /**
  * Screen 3 of 3.
@@ -19,10 +18,11 @@ import { requestLocationPermission } from "@/lib/location";
  */
 export default function LocationPermissionScreen() {
   const router = useRouter();
+  const completeOnboarding = useOnboardingStore((state) => state.complete);
   const [requesting, setRequesting] = useState(false);
 
   const finish = async (): Promise<void> => {
-    await AsyncStorage.setItem(STORAGE_KEYS.onboarded, "true").catch(() => undefined);
+    await completeOnboarding();
     router.replace("/(tabs)");
   };
 

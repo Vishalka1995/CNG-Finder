@@ -7,32 +7,50 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/constants/config";
+import {
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+  isSupabaseConfigured,
+} from "@/constants/config";
 import type { Database } from "@/types/database";
+
+const configured = isSupabaseConfigured();
 
 /**
  * The single Supabase entry point. Every query in the app routes through this
  * module -- no inline `createClient` calls in components.
+ *
+ * Demo mode deliberately runs with no Supabase keys, but `createClient` throws
+ * "supabaseUrl is required." on an empty URL, and it does so at module scope --
+ * which killed the app on launch before a single frame rendered. Callers all
+ * gate on `isDemoMode`/`isSupabaseConfigured` already, so an unreachable
+ * placeholder host keeps this import free of side effects instead.
  */
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    // Required on native: there is no URL to parse a session out of.
-    detectSessionInUrl: false,
+export const supabase = createClient<Database>(
+  configured ? SUPABASE_URL : "https://unconfigured.invalid",
+  configured ? SUPABASE_ANON_KEY : "unconfigured",
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      // Required on native: there is no URL to parse a session out of.
+      detectSessionInUrl: false,
+    },
   },
-});
+);
 
 // Registered once at module scope. Doing this inside a component would add a
 // duplicate listener on every remount.
-AppState.addEventListener("change", (state) => {
-  if (state === "active") {
-    void supabase.auth.startAutoRefresh();
-  } else {
-    void supabase.auth.stopAutoRefresh();
-  }
-});
+if (configured) {
+  AppState.addEventListener("change", (state) => {
+    if (state === "active") {
+      void supabase.auth.startAutoRefresh();
+    } else {
+      void supabase.auth.stopAutoRefresh();
+    }
+  });
+}
 
 /**
  * Error codes raised by the `enforce_report_rules` DB trigger. The trigger

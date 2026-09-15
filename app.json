@@ -8,6 +8,9 @@
     "scheme": "cngnow",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "updates": {
+      "url": "https://u.expo.dev/aa0778ff-7d04-4dd9-98ea-150c6db5408c"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -20,6 +23,9 @@
     },
     "android": {
       "package": "com.flatworld.cngnow",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      },
       "adaptiveIcon": {
         "backgroundColor": "#00A86B",
         "foregroundImage": "./assets/android-icon-foreground.png",
