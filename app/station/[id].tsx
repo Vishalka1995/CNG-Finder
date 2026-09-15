@@ -1,6 +1,14 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Clock, Heart, Navigation, Phone, Store } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  Heart,
+  Navigation,
+  Phone,
+  Store,
+} from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Linking as RNLinking,
   Pressable,
@@ -16,7 +24,7 @@ import { StatusBadge } from "@/components/station/StatusBadge";
 import { StatusPicker } from "@/components/station/StatusPicker";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors";
-import { REPORT_PROXIMITY_M, isDemoMode } from "@/constants/config";
+import { REPORT_COOLDOWN_MIN, REPORT_PROXIMITY_M, isDemoMode } from "@/constants/config";
 import { confidenceLabel, timeAgo } from "@/lib/confidence";
 import {
   addDemoReport,
@@ -42,16 +50,9 @@ import { useStationStore } from "@/stores/stationStore";
 import { showToast } from "@/stores/toastStore";
 import type { StationReport, StationStatus } from "@/types/database";
 
-/**
- * Grace period between tapping a status and the report actually being sent.
- *
- * One-tap reporting makes a misfire easy, and reports here are unusually
- * unforgiving: the table is append-only by design, and the 30-minute rate
- * limit means a wrong tap cannot be corrected for half an hour, during which
- * every other driver sees it. Deferring the insert for a few seconds makes a
- * mistake free to take back without needing to delete anything.
- */
-const UNDO_WINDOW_MS = 4000;
+/** Minutes before the same driver may report this station again. Mirrors the
+ *  rate limit enforced by enforce_report_rules() in the database. */
+const COOLDOWN_MS = REPORT_COOLDOWN_MIN * 60_000;
 
 /** Formats "06:00:00" as "6:00 am"; returns null for missing times. */
 function formatTime(value: string | null): string | null {
@@ -92,21 +93,35 @@ export default function StationDetailScreen() {
   );
   const applyOptimisticReport = useStationStore((state) => state.applyOptimisticReport);
   const recordReport = useReportStore((state) => state.record);
+  const myReports = useReportStore((state) => state.reports);
+  const loadMyReports = useReportStore((state) => state.load);
 
   const { ids: favoriteIds, load: loadFavorites, toggle } = useFavoriteStore();
   const isFavorite = id ? favoriteIds.includes(id) : false;
 
   useEffect(() => {
     void loadFavorites();
-  }, [loadFavorites]);
+    void loadMyReports();
+  }, [loadFavorites, loadMyReports]);
 
   const [reports, setReports] = useState<StationReport[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [reportsError, setReportsError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  /** The status tapped but not yet sent, during the undo window. */
-  const [pending, setPending] = useState<StationStatus | null>(null);
+  /**
+   * Set the moment a report succeeds, so the confirmation appears even where
+   * nothing was written to the history -- showcase mode reports nowhere, and
+   * should still demonstrate this state.
+   */
+  const [justReported, setJustReported] = useState<{
+    status: StationStatus;
+    at: string;
+  } | null>(null);
+
+  /** The clock, held in state so the cooldown countdown is derived from a
+   *  stable value rather than read fresh on every render. */
+  const [now, setNow] = useState(() => Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -217,6 +232,7 @@ export default function StationDetailScreen() {
       if (usePreferencesStore.getState().showcaseMode) {
         applyOptimisticReport(id, selected);
         hapticSuccess();
+        setJustReported({ status: selected, at: new Date().toISOString() });
         showToast(`Thanks! +${SHOWCASE_REPORT_POINTS} points earned.`);
         return;
       }
@@ -252,6 +268,7 @@ export default function StationDetailScreen() {
           note: null,
         });
         hapticSuccess();
+        setJustReported({ status: selected, at: new Date().toISOString() });
         showToast("Thanks! Your report helps other drivers.");
         return;
       }
@@ -307,6 +324,7 @@ export default function StationDetailScreen() {
         note: null,
       });
       hapticSuccess();
+      setJustReported({ status: selected, at: new Date().toISOString() });
 
       // A repeat report inside the award cooldown scores zero. Say nothing
       // about points in that case rather than "+0" -- the cooldown is
@@ -325,52 +343,44 @@ export default function StationDetailScreen() {
   };
 
   /**
-   * Holds the not-yet-sent report. A ref rather than state because the unmount
-   * handler below has to reach it without re-running whenever the component
-   * re-renders -- and `run` is captured at tap time, so it needs nothing from
-   * the render that eventually fires it.
+   * This driver's own last report for this station, if it is recent enough to
+   * still be inside the cooldown.
+   *
+   * Read from the persisted history rather than component state so it survives
+   * leaving the screen: coming back to a station you reported two minutes ago
+   * should not offer buttons that the database is about to reject.
    */
-  const pendingRef = useRef<{
-    timer: ReturnType<typeof setTimeout>;
-    run: () => void;
-  } | null>(null);
+  const recentReport = useMemo(() => {
+    // myReports is newest-first, so the first hit is the latest report.
+    const mine = id ? myReports.find((entry) => entry.stationId === id) : undefined;
 
-  const startReport = (status: StationStatus): void => {
-    if (pendingRef.current) clearTimeout(pendingRef.current.timer);
+    const candidate =
+      justReported ?? (mine ? { status: mine.status, at: mine.createdAt } : null);
 
-    setSubmitError(null);
-    setPending(status);
-    hapticSuccess();
+    if (!candidate) return null;
 
-    const run = (): void => {
-      pendingRef.current = null;
-      setPending(null);
-      void commitReport(status);
-    };
+    return now - new Date(candidate.at).getTime() < COOLDOWN_MS ? candidate : null;
+  }, [justReported, myReports, id, now]);
 
-    pendingRef.current = { timer: setTimeout(run, UNDO_WINDOW_MS), run };
-  };
+  /** Whole minutes until this station can be reported again. */
+  const minutesLeft = recentReport
+    ? Math.max(
+        1,
+        Math.ceil((COOLDOWN_MS - (now - new Date(recentReport.at).getTime())) / 60_000),
+      )
+    : 0;
 
-  const undoReport = (): void => {
-    if (!pendingRef.current) return;
+  // Ticks only while a cooldown is actually running, so the confirmation
+  // gives way to the buttons the moment reporting is allowed again rather
+  // than waiting for the screen to be revisited.
+  const recentAt = recentReport?.at ?? null;
 
-    clearTimeout(pendingRef.current.timer);
-    pendingRef.current = null;
-    setPending(null);
-  };
+  useEffect(() => {
+    if (!recentAt) return undefined;
 
-  // Leaving the screen confirms the pending report rather than discarding it:
-  // tapping a status and walking away means the report was intended, and
-  // silently dropping it would lose data the driver believed they had sent.
-  useEffect(
-    () => () => {
-      const waiting = pendingRef.current;
-      if (!waiting) return;
-      clearTimeout(waiting.timer);
-      waiting.run();
-    },
-    [],
-  );
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, [recentAt]);
 
   // Station not in the store -- usually a deep link or a reload on this screen.
   if (!station) {
@@ -484,26 +494,36 @@ export default function StationDetailScreen() {
         </Text>
 
         <View className="mt-4">
-          {pending ? (
-            // Replaces the picker rather than sitting under it, so the undo
-            // is where the finger already is and cannot be missed.
-            <View className="flex-row items-center rounded-2xl bg-slate-100 px-4 py-3">
-              <StatusBadge status={pending} />
-              <Text className="ml-3 flex-1 font-medium text-caption text-ink">
-                Sending…
+          {recentReport ? (
+            // Replaces the picker rather than sitting above it. Leaving the
+            // buttons up after a report gives no sense that anything happened,
+            // and invites a second tap that the database would reject for the
+            // next half hour anyway.
+            <View className="rounded-2xl bg-primary/10 p-4">
+              <View className="flex-row items-center">
+                <Check color={COLORS.primary} size={18} strokeWidth={2.5} />
+                <Text className="ml-2 flex-1 font-semibold text-caption text-ink">
+                  Thanks — you reported this {timeAgo(recentReport.at)}
+                </Text>
+              </View>
+
+              <View className="mt-3 flex-row items-center">
+                <StatusBadge status={recentReport.status} />
+                <Text className="ml-2 font-sans text-label text-muted">
+                  is what you reported
+                </Text>
+              </View>
+
+              <Text className="mt-3 font-sans text-label text-muted">
+                You can report this station again in {minutesLeft}{" "}
+                {minutesLeft === 1 ? "minute" : "minutes"}.
               </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Undo this report"
-                onPress={undoReport}
-                hitSlop={8}
-                className="rounded-xl bg-white px-3 py-2 active:opacity-70"
-              >
-                <Text className="font-semibold text-label text-primary">Undo</Text>
-              </Pressable>
             </View>
           ) : (
-            <StatusPicker onSelect={startReport} disabled={submitting} />
+            <StatusPicker
+              onSelect={(status) => void commitReport(status)}
+              disabled={submitting}
+            />
           )}
         </View>
 
