@@ -3,6 +3,8 @@ import { create } from "zustand";
 
 import {
   NEARBY_RADIUS_M,
+  SEARCH_MAX_RESULTS,
+  SEARCH_RADIUS_M,
   STATION_CACHE_MS,
   STORAGE_KEYS,
   isDemoMode,
@@ -11,7 +13,7 @@ import {
 import { summarize } from "@/lib/confidence";
 import { addDemoReport, getDemoReports, getDemoStations } from "@/lib/demoData";
 import type { Coords } from "@/lib/location";
-import { showcaseStations } from "@/lib/showcase";
+import { showcaseStation, showcaseStations } from "@/lib/showcase";
 import { supabase } from "@/lib/supabase";
 import { usePreferencesStore } from "@/stores/preferencesStore";
 import type { NearbyStation, StationStatus } from "@/types/database";
@@ -28,7 +30,17 @@ interface StationState {
   lastFetchedAt: number | null;
   selectedStationId: string | null;
 
+  /**
+   * Every station, for search. Separate from `stations` because that list is
+   * deliberately bounded to what is near you, and search must not be.
+   */
+  allStations: NearbyStation[];
+  loadingAll: boolean;
+
   fetchNearby: (coords: Coords, force?: boolean) => Promise<void>;
+  /** Loads the searchable list. Cheap to call repeatedly -- it fetches once
+   *  per session unless forced. */
+  loadAllStations: (coords: Coords, force?: boolean) => Promise<void>;
   loadCached: () => Promise<void>;
   selectStation: (id: string | null) => void;
   getStation: (id: string) => NearbyStation | undefined;
@@ -42,12 +54,53 @@ interface StationState {
 
 export const useStationStore = create<StationState>((set, get) => ({
   stations: [],
+  allStations: [],
+  loadingAll: false,
   isLoading: false,
   error: null,
   isStale: false,
   isDemo: false,
   lastFetchedAt: null,
   selectedStationId: null,
+
+  loadAllStations: async (coords, force = false) => {
+    const { allStations, loadingAll } = get();
+    if (loadingAll) return;
+    if (!force && allStations.length > 0) return;
+
+    set({ loadingAll: true });
+
+    try {
+      if (isDemoMode()) {
+        set({ allStations: getDemoStations(coords), loadingAll: false });
+        return;
+      }
+
+      // Same RPC as the nearby list, with the radius opened up -- see
+      // SEARCH_RADIUS_M. Reusing it means search results carry the same live
+      // status and distance as everywhere else in the app.
+      const { data, error } = await supabase.rpc("nearby_stations", {
+        lat: coords.latitude,
+        lng: coords.longitude,
+        radius_m: SEARCH_RADIUS_M,
+        max_results: SEARCH_MAX_RESULTS,
+      });
+
+      if (error) throw new Error(error.message);
+
+      const rows = data ?? [];
+      set({
+        allStations: usePreferencesStore.getState().showcaseMode
+          ? rows.map(showcaseStation)
+          : rows,
+        loadingAll: false,
+      });
+    } catch {
+      // Non-fatal: search falls back to whatever is already loaded, and the
+      // nearby list is unaffected.
+      set({ loadingAll: false });
+    }
+  },
 
   /**
    * Fetches stations near `coords`. Results are cached for STATION_CACHE_MS to

@@ -9,6 +9,7 @@ import { StationCard } from "@/components/station/StationCard";
 import { COLORS } from "@/constants/colors";
 import { STORAGE_KEYS } from "@/constants/config";
 import { getCurrentCoords } from "@/lib/location";
+import { rankStations } from "@/lib/search";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useStationStore } from "@/stores/stationStore";
 
@@ -21,11 +22,17 @@ export default function SearchScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const stations = useStationStore((state) => state.stations);
+  const allStations = useStationStore((state) => state.allStations);
   const fetchNearby = useStationStore((state) => state.fetchNearby);
+  const loadAllStations = useStationStore((state) => state.loadAllStations);
   const { ids: favoriteIds, load: loadFavorites, toggle } = useFavoriteStore();
 
   useEffect(() => {
     void loadFavorites();
+
+    // Pulled when the search screen opens rather than at launch: it is only
+    // needed here, and it keeps it off the critical path of the map.
+    void getCurrentCoords().then((fix) => loadAllStations(fix.coords));
 
     void AsyncStorage.getItem(STORAGE_KEYS.recentSearches)
       .then((raw) => {
@@ -35,27 +42,18 @@ export default function SearchScreen() {
         }
       })
       .catch(() => undefined);
-  }, [loadFavorites]);
+  }, [loadFavorites, loadAllStations]);
 
-  const results = useMemo(() => {
-    const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    if (terms.length === 0) return [];
+  // Searches every station, not just the nearby list. Bounding search to the
+  // 30 km radius meant typing a station's name from another city returned
+  // nothing, which reads as "it is not in this app" rather than "it is far
+  // away". Falls back to the nearby list until the full one has arrived.
+  const searchable = allStations.length > 0 ? allStations : stations;
 
-    return stations.filter((station) => {
-      // Word-prefix matching rather than a plain substring test. A naive
-      // `includes` makes "hp" match "Yeshwanthpur", which reads as a bug to the
-      // user. Requiring every typed word to start some word in the station's
-      // text also makes multi-word queries like "bpcl heb" work.
-      const words = [station.name, station.area, station.address, station.operator]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .split(/[^a-z0-9]+/)
-        .filter(Boolean);
-
-      return terms.every((term) => words.some((word) => word.startsWith(term)));
-    });
-  }, [stations, query]);
+  const results = useMemo(
+    () => rankStations(searchable, query),
+    [searchable, query],
+  );
 
   /** Saves a term once the user acts on it, not on every keystroke. */
   const rememberTerm = (term: string): void => {

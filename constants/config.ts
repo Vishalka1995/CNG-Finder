@@ -45,6 +45,24 @@ export const MAP_STYLE_URL = MAP_STYLES.streets;
 export const NEARBY_RADIUS_M = 30_000;
 
 /**
+ * Radius for the station list that SEARCH runs against.
+ *
+ * Search deliberately ignores NEARBY_RADIUS_M. Filtering search to 30 km meant
+ * someone in Kolhapur typing a Bangalore station name got an empty screen --
+ * which reads as "that station is not in this app", not as "out of range".
+ *
+ * Large enough to cover India from any corner, so it is "every station" in
+ * practice while still going through the same nearby_stations RPC, which
+ * already computes distance and live status. A dedicated all-stations function
+ * would return exactly the same rows for a list this size.
+ */
+export const SEARCH_RADIUS_M = 5_000_000;
+
+/** Upper bound on the searchable list. Well above the ~128 stations that
+ *  exist, and a guard against pulling an unbounded result set one day. */
+export const SEARCH_MAX_RESULTS = 5_000;
+
+/**
  * Reporter must be within this distance of the station.
  * 300m rather than the original 200m: Bangalore GPS drift in dense areas is
  * routinely 50-100m, and rejecting an honest driver is worse than accepting a
