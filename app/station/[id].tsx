@@ -10,6 +10,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Linking as RNLinking,
   Pressable,
   RefreshControl,
@@ -33,7 +34,7 @@ import {
   hasDemoReport,
 } from "@/lib/demoData";
 import { getDeviceId } from "@/lib/device";
-import { hapticError, hapticSuccess } from "@/lib/haptics";
+import { hapticError, hapticSelect, hapticSuccess } from "@/lib/haptics";
 import {
   distanceMeters,
   formatDistance,
@@ -122,7 +123,9 @@ export default function StationDetailScreen() {
   /** The clock, held in state so the cooldown countdown is derived from a
    *  stable value rather than read fresh on every render. */
   const [now, setNow] = useState(() => Date.now());
-  const [submitting, setSubmitting] = useState(false);
+  /** The status currently being sent. Getting a GPS fix and writing the report
+   *  takes a second or two of real work, which has to be visible. */
+  const [sending, setSending] = useState<StationStatus | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   /** Shared by the mount effect and pull-to-refresh; never itself cancelled. */
@@ -220,7 +223,7 @@ export default function StationDetailScreen() {
   const commitReport = async (selected: StationStatus): Promise<void> => {
     if (!id) return;
 
-    setSubmitting(true);
+    setSending(selected);
     setSubmitError(null);
 
     try {
@@ -232,7 +235,12 @@ export default function StationDetailScreen() {
       if (usePreferencesStore.getState().showcaseMode) {
         applyOptimisticReport(id, selected);
         hapticSuccess();
-        setJustReported({ status: selected, at: new Date().toISOString() });
+        // The clock has to move with the report. `now` was last read before this
+        // report existed, so leaving it behind makes the cooldown look longer
+        // than it is -- 31 minutes for a 30-minute limit.
+        const at = Date.now();
+        setNow(at);
+        setJustReported({ status: selected, at: new Date(at).toISOString() });
         showToast(`Thanks! +${SHOWCASE_REPORT_POINTS} points earned.`);
         return;
       }
@@ -268,7 +276,12 @@ export default function StationDetailScreen() {
           note: null,
         });
         hapticSuccess();
-        setJustReported({ status: selected, at: new Date().toISOString() });
+        // The clock has to move with the report. `now` was last read before this
+        // report existed, so leaving it behind makes the cooldown look longer
+        // than it is -- 31 minutes for a 30-minute limit.
+        const at = Date.now();
+        setNow(at);
+        setJustReported({ status: selected, at: new Date(at).toISOString() });
         showToast("Thanks! Your report helps other drivers.");
         return;
       }
@@ -324,7 +337,12 @@ export default function StationDetailScreen() {
         note: null,
       });
       hapticSuccess();
-      setJustReported({ status: selected, at: new Date().toISOString() });
+      // The clock has to move with the report. `now` was last read before this
+      // report existed, so leaving it behind makes the cooldown look longer
+      // than it is -- 31 minutes for a 30-minute limit.
+      const at = Date.now();
+      setNow(at);
+      setJustReported({ status: selected, at: new Date(at).toISOString() });
 
       // A repeat report inside the award cooldown scores zero. Say nothing
       // about points in that case rather than "+0" -- the cooldown is
@@ -338,7 +356,7 @@ export default function StationDetailScreen() {
     } catch (err) {
       failWith(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
-      setSubmitting(false);
+      setSending(null);
     }
   };
 
@@ -519,10 +537,25 @@ export default function StationDetailScreen() {
                 {minutesLeft === 1 ? "minute" : "minutes"}.
               </Text>
             </View>
+          ) : sending ? (
+            // Getting a fix and writing the report is a second or two of real
+            // work. Without this the tap appears to do nothing at all, which
+            // invites a second tap on a different status.
+            <View className="flex-row items-center rounded-2xl bg-slate-100 px-4 py-4">
+              <ActivityIndicator color={COLORS.primary} />
+              <StatusBadge status={sending} />
+              <Text className="ml-2 flex-1 font-medium text-caption text-muted">
+                Sending your report…
+              </Text>
+            </View>
           ) : (
             <StatusPicker
-              onSelect={(status) => void commitReport(status)}
-              disabled={submitting}
+              onSelect={(status) => {
+                // Fires before any of the async work, so the tap is confirmed
+                // in the hand at the moment it lands.
+                hapticSelect();
+                void commitReport(status);
+              }}
             />
           )}
         </View>
