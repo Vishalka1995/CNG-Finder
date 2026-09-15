@@ -120,6 +120,18 @@ export default function StationDetailScreen() {
     at: string;
   } | null>(null);
 
+  /**
+   * The driver's own report, shown at the top of the timeline straight away.
+   *
+   * Waiting for the refetch to bring it back is a round trip the driver spends
+   * looking at a list that does not contain what they just did -- and in
+   * showcase mode it never arrives at all, because that timeline is synthetic.
+   * Carries the real row id so it can step aside the moment the server copy
+   * shows up, rather than being matched on a timestamp the two clocks disagree
+   * about.
+   */
+  const [myEntry, setMyEntry] = useState<StationReport | null>(null);
+
   /** The clock, held in state so the cooldown countdown is derived from a
    *  stable value rather than read fresh on every render. */
   const [now, setNow] = useState(() => Date.now());
@@ -241,6 +253,14 @@ export default function StationDetailScreen() {
         const at = Date.now();
         setNow(at);
         setJustReported({ status: selected, at: new Date(at).toISOString() });
+        // Never collides with a fetched id -- the showcase timeline is
+        // generated, so this entry stays until the screen is left.
+        setMyEntry({
+          id: `showcase-mine-${at}`,
+          status: selected,
+          note: null,
+          created_at: new Date(at).toISOString(),
+        });
         showToast(`Thanks! +${SHOWCASE_REPORT_POINTS} points earned.`);
         return;
       }
@@ -343,6 +363,14 @@ export default function StationDetailScreen() {
       const at = Date.now();
       setNow(at);
       setJustReported({ status: selected, at: new Date(at).toISOString() });
+      // Carries the real row id, so it drops out of the timeline as soon as
+      // the refetch returns the same report from the server.
+      setMyEntry({
+        id: inserted.id,
+        status: selected,
+        note: null,
+        created_at: new Date(at).toISOString(),
+      });
 
       // A repeat report inside the award cooldown scores zero. Say nothing
       // about points in that case rather than "+0" -- the cooldown is
@@ -379,6 +407,14 @@ export default function StationDetailScreen() {
 
     return now - new Date(candidate.at).getTime() < COOLDOWN_MS ? candidate : null;
   }, [justReported, myReports, id, now]);
+
+  /** The timeline, with the driver's own report on top until the fetched list
+   *  carries it. Capped to the same five the RPC returns. */
+  const timeline = useMemo(() => {
+    if (!myEntry) return reports;
+    if (reports.some((entry) => entry.id === myEntry.id)) return reports;
+    return [myEntry, ...reports].slice(0, 5);
+  }, [myEntry, reports]);
 
   /** Whole minutes until this station can be reported again. */
   const minutesLeft = recentReport
@@ -613,7 +649,7 @@ export default function StationDetailScreen() {
               <Text className="font-medium text-label text-ink">{reportsError}</Text>
             </View>
           ) : (
-            <ReportTimeline reports={reports} isLoading={loadingReports} />
+            <ReportTimeline reports={timeline} isLoading={loadingReports} />
           )}
         </View>
 
