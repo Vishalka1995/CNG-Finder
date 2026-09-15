@@ -1,27 +1,29 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, Clock, Heart, Navigation, Phone, Store } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  KeyboardAvoidingView,
   Linking as RNLinking,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ReportTimeline } from "@/components/station/ReportTimeline";
 import { StatusBadge } from "@/components/station/StatusBadge";
-import { StatusOptionCard } from "@/components/station/StatusOptionCard";
+import { StatusPicker } from "@/components/station/StatusPicker";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/constants/colors";
 import { REPORT_PROXIMITY_M, isDemoMode } from "@/constants/config";
 import { confidenceLabel, timeAgo } from "@/lib/confidence";
-import { addDemoReport, getDemoReports, getDemoStationCoords, hasDemoReport } from "@/lib/demoData";
+import {
+  addDemoReport,
+  getDemoReports,
+  getDemoStationCoords,
+  hasDemoReport,
+} from "@/lib/demoData";
 import { getDeviceId } from "@/lib/device";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import {
@@ -40,25 +42,16 @@ import { useStationStore } from "@/stores/stationStore";
 import { showToast } from "@/stores/toastStore";
 import type { StationReport, StationStatus } from "@/types/database";
 
-const NOTE_MAX = 140;
-
-const OPTIONS: { status: StationStatus; title: string; subtitle: string }[] = [
-  {
-    status: "available",
-    title: "Available",
-    subtitle: "Gas is flowing, no long wait",
-  },
-  {
-    status: "long_queue",
-    title: "Long queue",
-    subtitle: "Gas available but 20+ min wait",
-  },
-  {
-    status: "not_available",
-    title: "Not available",
-    subtitle: "No gas, or the pump is shut",
-  },
-];
+/**
+ * Grace period between tapping a status and the report actually being sent.
+ *
+ * One-tap reporting makes a misfire easy, and reports here are unusually
+ * unforgiving: the table is append-only by design, and the 30-minute rate
+ * limit means a wrong tap cannot be corrected for half an hour, during which
+ * every other driver sees it. Deferring the insert for a few seconds makes a
+ * mistake free to take back without needing to delete anything.
+ */
+const UNDO_WINDOW_MS = 4000;
 
 /** Formats "06:00:00" as "6:00 am"; returns null for missing times. */
 function formatTime(value: string | null): string | null {
@@ -112,14 +105,17 @@ export default function StationDetailScreen() {
   const [reportsError, setReportsError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [selected, setSelected] = useState<StationStatus | null>(null);
-  const [note, setNote] = useState("");
+  /** The status tapped but not yet sent, during the undo window. */
+  const [pending, setPending] = useState<StationStatus | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   /** Shared by the mount effect and pull-to-refresh; never itself cancelled. */
   const loadReports = useCallback(
-    async (stationId: string, isCancelled: () => boolean = () => false): Promise<void> => {
+    async (
+      stationId: string,
+      isCancelled: () => boolean = () => false,
+    ): Promise<void> => {
       if (usePreferencesStore.getState().showcaseMode) {
         if (!isCancelled()) {
           setReports(showcaseReports(stationId));
@@ -202,8 +198,12 @@ export default function StationDetailScreen() {
     setSubmitError(message);
   };
 
-  const submit = async (): Promise<void> => {
-    if (!selected || !id) return;
+  /**
+   * Sends the report. Only ever called from the undo timer (or from leaving
+   * the screen), never straight from the tap -- see startReport.
+   */
+  const commitReport = async (selected: StationStatus): Promise<void> => {
+    if (!id) return;
 
     setSubmitting(true);
     setSubmitError(null);
@@ -218,8 +218,6 @@ export default function StationDetailScreen() {
         applyOptimisticReport(id, selected);
         hapticSuccess();
         showToast(`Thanks! +${SHOWCASE_REPORT_POINTS} points earned.`);
-        setSelected(null);
-        setNote("");
         return;
       }
 
@@ -245,18 +243,16 @@ export default function StationDetailScreen() {
           }
         }
 
-        addDemoReport(id, selected, note.trim() || null);
+        addDemoReport(id, selected, null);
         applyOptimisticReport(id, selected);
         await recordReport({
           stationId: id,
           stationName: station?.name ?? "Unknown station",
           status: selected,
-          note: note.trim() || null,
+          note: null,
         });
         hapticSuccess();
         showToast("Thanks! Your report helps other drivers.");
-        setSelected(null);
-        setNote("");
         return;
       }
 
@@ -291,7 +287,7 @@ export default function StationDetailScreen() {
         .insert({
           station_id: id,
           status: selected,
-          note: note.trim() || null,
+          note: null,
           device_id: deviceId,
           reported_location: toPointWKT(fix.coords.longitude, fix.coords.latitude),
         })
@@ -308,7 +304,7 @@ export default function StationDetailScreen() {
         stationId: id,
         stationName: station?.name ?? "Unknown station",
         status: selected,
-        note: note.trim() || null,
+        note: null,
       });
       hapticSuccess();
 
@@ -321,15 +317,60 @@ export default function StationDetailScreen() {
           ? `Thanks! +${earned} points earned.`
           : "Thanks! Your report helps other drivers.",
       );
-
-      setSelected(null);
-      setNote("");
     } catch (err) {
       failWith(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
     }
   };
+
+  /**
+   * Holds the not-yet-sent report. A ref rather than state because the unmount
+   * handler below has to reach it without re-running whenever the component
+   * re-renders -- and `run` is captured at tap time, so it needs nothing from
+   * the render that eventually fires it.
+   */
+  const pendingRef = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    run: () => void;
+  } | null>(null);
+
+  const startReport = (status: StationStatus): void => {
+    if (pendingRef.current) clearTimeout(pendingRef.current.timer);
+
+    setSubmitError(null);
+    setPending(status);
+    hapticSuccess();
+
+    const run = (): void => {
+      pendingRef.current = null;
+      setPending(null);
+      void commitReport(status);
+    };
+
+    pendingRef.current = { timer: setTimeout(run, UNDO_WINDOW_MS), run };
+  };
+
+  const undoReport = (): void => {
+    if (!pendingRef.current) return;
+
+    clearTimeout(pendingRef.current.timer);
+    pendingRef.current = null;
+    setPending(null);
+  };
+
+  // Leaving the screen confirms the pending report rather than discarding it:
+  // tapping a status and walking away means the report was intended, and
+  // silently dropping it would lose data the driver believed they had sent.
+  useEffect(
+    () => () => {
+      const waiting = pendingRef.current;
+      if (!waiting) return;
+      clearTimeout(waiting.timer);
+      waiting.run();
+    },
+    [],
+  );
 
   // Station not in the store -- usually a deep link or a reload on this screen.
   if (!station) {
@@ -385,170 +426,146 @@ export default function StationDetailScreen() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerClassName="px-6 py-6"
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={refresh}
-              tintColor={COLORS.primary}
-            />
-          }
-        >
-          <Text className="font-bold text-title text-ink">{station.name}</Text>
-
-          {station.address ? (
-            <Text className="mt-1 font-sans text-caption text-muted">
-              {station.address}
-            </Text>
-          ) : null}
-
-          <Text className="mt-2 font-medium text-caption text-primary">
-            {formatDistance(station.distance_m)} away
-          </Text>
-
-          {/* Live status */}
-          <View className="mt-6 rounded-2xl bg-slate-50 p-4">
-            <StatusBadge status={station.status} size="lg" />
-
-            <Text className="mt-3 font-sans text-caption text-muted">
-              {confidenceLabel(station.confidence, station.report_count)}
-            </Text>
-
-            {station.last_reported_at ? (
-              <Text className="mt-1 font-sans text-label text-muted">
-                Last reported {timeAgo(station.last_reported_at)}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Get directions */}
-          <View className="mt-6">
-            <Pressable
-              accessibilityRole="button"
-              onPress={openDirections}
-              className="min-h-[52px] flex-row items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 active:opacity-70"
-            >
-              <Navigation color={COLORS.ink} size={18} />
-              <Text className="ml-2 font-semibold text-body text-ink">Get directions</Text>
-            </Pressable>
-          </View>
-
-          {/* Report status -- always visible, no separate screen */}
-          <Text className="mt-8 font-semibold text-heading text-ink">Report status</Text>
-          <Text className="mt-1 font-sans text-body text-muted">
-            How is the CNG availability right now?
-          </Text>
-
-          <View className="mt-4 gap-3">
-            {OPTIONS.map((option) => (
-              <StatusOptionCard
-                key={option.status}
-                status={option.status}
-                title={option.title}
-                subtitle={option.subtitle}
-                selected={selected === option.status}
-                onPress={() => {
-                  setSelected(option.status);
-                  setSubmitError(null);
-                }}
-              />
-            ))}
-          </View>
-
-          <Text className="mt-6 font-semibold text-caption text-ink">
-            Add a note (optional)
-          </Text>
-
-          <TextInput
-            value={note}
-            onChangeText={(text) => setNote(text.slice(0, NOTE_MAX))}
-            placeholder="Anything else drivers should know?"
-            placeholderTextColor={COLORS.unknown}
-            multiline
-            maxLength={NOTE_MAX}
-            className="mt-2 min-h-[80px] rounded-2xl border border-slate-300 bg-white px-4 py-3 font-sans text-caption text-ink"
-            textAlignVertical="top"
+      {/* No keyboard avoidance: with the note field gone, nothing on this
+          screen takes text input. */}
+      <ScrollView
+        contentContainerClassName="px-6 py-6"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={COLORS.primary}
           />
+        }
+      >
+        <Text className="font-bold text-title text-ink">{station.name}</Text>
 
-          <Text className="mt-1 text-right font-sans text-label text-muted">
-            {note.length}/{NOTE_MAX}
+        {station.address ? (
+          <Text className="mt-1 font-sans text-caption text-muted">
+            {station.address}
+          </Text>
+        ) : null}
+
+        <Text className="mt-2 font-medium text-caption text-primary">
+          {formatDistance(station.distance_m)} away
+        </Text>
+
+        {/* Live status */}
+        <View className="mt-6 rounded-2xl bg-slate-50 p-4">
+          <StatusBadge status={station.status} size="lg" />
+
+          <Text className="mt-3 font-sans text-caption text-muted">
+            {confidenceLabel(station.confidence, station.report_count)}
           </Text>
 
-          {submitError ? (
-            <View className="mt-4 rounded-xl bg-unavailable/15 px-4 py-3">
-              <Text className="font-medium text-caption text-ink">{submitError}</Text>
-            </View>
+          {station.last_reported_at ? (
+            <Text className="mt-1 font-sans text-label text-muted">
+              Last reported {timeAgo(station.last_reported_at)}
+            </Text>
           ) : null}
+        </View>
 
-          <View className="mt-4">
-            <Button
-              label="Submit report"
-              onPress={submit}
-              disabled={!selected}
-              loading={submitting}
-            />
-          </View>
+        {/* Get directions */}
+        <View className="mt-6">
+          <Pressable
+            accessibilityRole="button"
+            onPress={openDirections}
+            className="min-h-[52px] flex-row items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 active:opacity-70"
+          >
+            <Navigation color={COLORS.ink} size={18} />
+            <Text className="ml-2 font-semibold text-body text-ink">Get directions</Text>
+          </Pressable>
+        </View>
 
-          {/* Station info */}
-          <Text className="mt-8 font-semibold text-heading text-ink">Information</Text>
+        {/* Report status -- always visible, no separate screen */}
+        <Text className="mt-8 font-semibold text-heading text-ink">Report status</Text>
+        <Text className="mt-1 font-sans text-body text-muted">
+          How is the CNG availability right now?
+        </Text>
 
-          <View className="mt-3 gap-3">
-            {station.operator ? (
-              <View className="flex-row items-center">
-                <Store color={COLORS.muted} size={18} />
-                <Text className="ml-3 font-sans text-caption text-ink">
-                  {station.operator}
-                </Text>
-              </View>
-            ) : null}
-
-            <View className="flex-row items-center">
-              <Clock color={COLORS.muted} size={18} />
-              <Text className="ml-3 font-sans text-caption text-ink">
-                {station.is_24x7
-                  ? "Open 24 hours"
-                  : opens && closes
-                    ? `${opens} to ${closes}`
-                    : "Hours not known"}
+        <View className="mt-4">
+          {pending ? (
+            // Replaces the picker rather than sitting under it, so the undo
+            // is where the finger already is and cannot be missed.
+            <View className="flex-row items-center rounded-2xl bg-slate-100 px-4 py-3">
+              <StatusBadge status={pending} />
+              <Text className="ml-3 flex-1 font-medium text-caption text-ink">
+                Sending…
               </Text>
-            </View>
-
-            {station.phone ? (
               <Pressable
                 accessibilityRole="button"
-                onPress={callStation}
-                className="flex-row items-center active:opacity-60"
+                accessibilityLabel="Undo this report"
+                onPress={undoReport}
+                hitSlop={8}
+                className="rounded-xl bg-white px-3 py-2 active:opacity-70"
               >
-                <Phone color={COLORS.muted} size={18} />
-                <Text className="ml-3 font-medium text-caption text-primary">
-                  {station.phone}
-                </Text>
+                <Text className="font-semibold text-label text-primary">Undo</Text>
               </Pressable>
-            ) : null}
+            </View>
+          ) : (
+            <StatusPicker onSelect={startReport} disabled={submitting} />
+          )}
+        </View>
+
+        {submitError ? (
+          <View className="mt-4 rounded-xl bg-unavailable/15 px-4 py-3">
+            <Text className="font-medium text-caption text-ink">{submitError}</Text>
+          </View>
+        ) : null}
+
+        {/* Station info */}
+        <Text className="mt-8 font-semibold text-heading text-ink">Information</Text>
+
+        <View className="mt-3 gap-3">
+          {station.operator ? (
+            <View className="flex-row items-center">
+              <Store color={COLORS.muted} size={18} />
+              <Text className="ml-3 font-sans text-caption text-ink">
+                {station.operator}
+              </Text>
+            </View>
+          ) : null}
+
+          <View className="flex-row items-center">
+            <Clock color={COLORS.muted} size={18} />
+            <Text className="ml-3 font-sans text-caption text-ink">
+              {station.is_24x7
+                ? "Open 24 hours"
+                : opens && closes
+                  ? `${opens} to ${closes}`
+                  : "Hours not known"}
+            </Text>
           </View>
 
-          {/* Recent reports */}
-          <Text className="mt-8 font-semibold text-heading text-ink">Recent reports</Text>
+          {station.phone ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={callStation}
+              className="flex-row items-center active:opacity-60"
+            >
+              <Phone color={COLORS.muted} size={18} />
+              <Text className="ml-3 font-medium text-caption text-primary">
+                {station.phone}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
 
-          <View className="mt-3">
-            {reportsError ? (
-              <View className="rounded-xl bg-unavailable/15 px-4 py-3">
-                <Text className="font-medium text-label text-ink">{reportsError}</Text>
-              </View>
-            ) : (
-              <ReportTimeline reports={reports} isLoading={loadingReports} />
-            )}
-          </View>
+        {/* Recent reports */}
+        <Text className="mt-8 font-semibold text-heading text-ink">Recent reports</Text>
 
-          <View className="h-8" />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <View className="mt-3">
+          {reportsError ? (
+            <View className="rounded-xl bg-unavailable/15 px-4 py-3">
+              <Text className="font-medium text-label text-ink">{reportsError}</Text>
+            </View>
+          ) : (
+            <ReportTimeline reports={reports} isLoading={loadingReports} />
+          )}
+        </View>
+
+        <View className="h-8" />
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -110,10 +110,7 @@ function searchableWords(station: NearbyStation): string[] {
  * either -- which keeps multi-word queries narrowing rather than widening.
  * Ties break on distance, so of two equally good matches the closer one wins.
  */
-export function rankStations(
-  stations: NearbyStation[],
-  query: string,
-): NearbyStation[] {
+export function rankStations(stations: NearbyStation[], query: string): NearbyStation[] {
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length === 0) return [];
 
