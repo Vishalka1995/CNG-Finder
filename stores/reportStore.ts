@@ -23,6 +23,15 @@ export interface MyReport {
   status: StationStatus;
   note: string | null;
   createdAt: string;
+  /**
+   * The database row id, when the report reached the server.
+   *
+   * The local `id` above is generated on the device, so it cannot be matched
+   * against point_transactions -- this is what lets this history show what
+   * each report earned. Absent on entries recorded before this existed, and
+   * on demo reports, which never reach the server at all.
+   */
+  reportId?: string;
 }
 
 interface ReportState {

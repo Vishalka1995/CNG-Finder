@@ -95,6 +95,7 @@ export default function RootLayout() {
           <Stack.Screen name="search" />
           <Stack.Screen name="my-reports" />
           <Stack.Screen name="hall-of-fame" />
+          <Stack.Screen name="how-points-work" />
           <Stack.Screen name="add-station" options={{ presentation: "modal" }} />
         </Stack>
         <Toast />

@@ -2,7 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
 
-import { BANGALORE_CENTER, STORAGE_KEYS } from "@/constants/config";
+import { BANGALORE_CENTER, CITY_CENTERS, STORAGE_KEYS } from "@/constants/config";
+import { usePreferencesStore } from "@/stores/preferencesStore";
 
 export interface Coords {
   latitude: number;
@@ -121,8 +122,27 @@ async function tryGetPosition(): Promise<Coords | null> {
   }
 }
 
+/**
+ * Where to point when no fix is available, best guess first:
+ *
+ *   1. the last real fix -- where the driver actually was
+ *   2. the city they nominated as home
+ *   3. Bengaluru, the built-in default
+ *
+ * The remembered fix outranks the home city on purpose: an actual position
+ * from the last run is more useful than the centre of a city, even the right
+ * one. The home city only matters on a fresh install or after the fix ages
+ * out -- which is exactly when a Kolhapur driver was previously dropped 400 km
+ * away in Bengaluru.
+ */
 async function fallbackCoords(): Promise<Coords> {
-  return (await getRememberedCoords()) ?? { ...BANGALORE_CENTER };
+  const remembered = await getRememberedCoords();
+  if (remembered) return remembered;
+
+  const { homeCity } = usePreferencesStore.getState();
+  if (homeCity) return { ...CITY_CENTERS[homeCity] };
+
+  return { ...BANGALORE_CENTER };
 }
 
 /**

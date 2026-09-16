@@ -1,7 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
-import { DEFAULT_MAP_STYLE, type MapStyleId } from "@/constants/config";
+import {
+  CITY_CENTERS,
+  DEFAULT_MAP_STYLE,
+  type CityId,
+  type MapStyleId,
+} from "@/constants/config";
 
 /**
  * Device-local user preferences.
@@ -27,6 +32,9 @@ interface Preferences {
   showcaseMode: boolean;
   /** Hides the one-time "reports come from drivers" card once dismissed. */
   reportingTipDismissed: boolean;
+  /** Where to fall back to when no location can be resolved. Null means the
+   *  driver has not chosen, and the app uses its built-in default. */
+  homeCity: CityId | null;
 }
 
 const DEFAULTS: Preferences = {
@@ -34,6 +42,7 @@ const DEFAULTS: Preferences = {
   mapStyle: DEFAULT_MAP_STYLE,
   showcaseMode: false,
   reportingTipDismissed: false,
+  homeCity: null,
 };
 
 interface PreferencesState extends Preferences {
@@ -43,6 +52,7 @@ interface PreferencesState extends Preferences {
   setMapStyle: (style: MapStyleId) => Promise<void>;
   setShowcaseMode: (enabled: boolean) => Promise<void>;
   dismissReportingTip: () => Promise<void>;
+  setHomeCity: (city: CityId | null) => Promise<void>;
 }
 
 /** Narrows unknown parsed JSON to a full Preferences object, field by field. */
@@ -67,6 +77,10 @@ function coerce(parsed: unknown): Preferences {
       typeof value.reportingTipDismissed === "boolean"
         ? value.reportingTipDismissed
         : DEFAULTS.reportingTipDismissed,
+    homeCity:
+      typeof value.homeCity === "string" && value.homeCity in CITY_CENTERS
+        ? (value.homeCity as CityId)
+        : DEFAULTS.homeCity,
   };
 }
 
@@ -76,8 +90,13 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
    * partial object would silently drop the others on the next load.
    */
   const persist = async (): Promise<void> => {
-    const { notificationsEnabled, mapStyle, showcaseMode, reportingTipDismissed } =
-      get();
+    const {
+      notificationsEnabled,
+      mapStyle,
+      showcaseMode,
+      reportingTipDismissed,
+      homeCity,
+    } = get();
     try {
       await AsyncStorage.setItem(
         STORAGE_KEY,
@@ -86,6 +105,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
           mapStyle,
           showcaseMode,
           reportingTipDismissed,
+          homeCity,
         } satisfies Preferences),
       );
     } catch {
@@ -123,6 +143,11 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => {
 
     dismissReportingTip: async () => {
       set({ reportingTipDismissed: true });
+      await persist();
+    },
+
+    setHomeCity: async (city) => {
+      set({ homeCity: city });
       await persist();
     },
   };

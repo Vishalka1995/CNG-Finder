@@ -355,6 +355,8 @@ export default function StationDetailScreen() {
         stationName: station?.name ?? "Unknown station",
         status: selected,
         note: null,
+        // Lets My reports show what this one earned.
+        reportId: inserted.id,
       });
       hapticSuccess();
       // The clock has to move with the report. `now` was last read before this

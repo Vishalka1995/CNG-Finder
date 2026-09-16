@@ -1,20 +1,26 @@
 import { Stack, useRouter } from "expo-router";
 import { ArrowLeft, RadioTower } from "lucide-react-native";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StatusBadge } from "@/components/station/StatusBadge";
 import { COLORS } from "@/constants/colors";
 import { timeAgo } from "@/lib/confidence";
+import { getPointsByReport } from "@/lib/points";
 import { useReportStore } from "@/stores/reportStore";
 
 export default function MyReportsScreen() {
   const router = useRouter();
   const { reports, isLoaded, load, clear } = useReportStore();
+  const [pointsByReport, setPointsByReport] = useState<Record<string, number>>({});
 
   useEffect(() => {
     void load();
+
+    // Fetched once for the whole list rather than per row. Failure is silent:
+    // the history is still worth showing without the points beside it.
+    void getPointsByReport().then(setPointsByReport);
   }, [load]);
 
   const confirmClear = (): void => {
@@ -58,12 +64,10 @@ export default function MyReportsScreen() {
       {isLoaded && reports.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
           <RadioTower color={COLORS.unknown} size={40} strokeWidth={1.5} />
-          <Text className="mt-4 font-semibold text-heading text-ink">
-            No reports yet
-          </Text>
+          <Text className="mt-4 font-semibold text-heading text-ink">No reports yet</Text>
           <Text className="mt-2 text-center font-sans text-caption text-muted">
-            When you report a station status, it appears here so you can see what you
-            have contributed.
+            When you report a station status, it appears here so you can see what you have
+            contributed.
           </Text>
         </View>
       ) : (
@@ -85,9 +89,20 @@ export default function MyReportsScreen() {
 
               <View className="mt-2 flex-row items-center justify-between">
                 <StatusBadge status={item.status} />
-                <Text className="font-sans text-label text-muted">
-                  {timeAgo(item.createdAt)}
-                </Text>
+
+                <View className="flex-row items-center">
+                  {/* Absent for reports made before this was recorded, and for
+                      ones that earned nothing inside the award cooldown. */}
+                  {item.reportId && pointsByReport[item.reportId] ? (
+                    <Text className="mr-3 font-semibold text-label text-primary">
+                      +{pointsByReport[item.reportId]}
+                    </Text>
+                  ) : null}
+
+                  <Text className="font-sans text-label text-muted">
+                    {timeAgo(item.createdAt)}
+                  </Text>
+                </View>
               </View>
 
               {item.note ? (

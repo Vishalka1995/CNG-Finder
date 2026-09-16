@@ -80,6 +80,22 @@ export const CONFIDENCE_WINDOW_MIN = 60;
 export const BANGALORE_CENTER = { longitude: 77.5946, latitude: 12.9716 } as const;
 
 /**
+ * Cities the app has station data for, and where to point when GPS fails.
+ *
+ * A driver in Kolhapur whose location cannot be resolved should not be shown
+ * Bengaluru, 400 km away -- they can nominate their own city instead. Add a
+ * row here when a new city's stations are imported.
+ */
+export const CITY_CENTERS = {
+  Bangalore: { latitude: 12.9716, longitude: 77.5946 },
+  Kolhapur: { latitude: 16.705, longitude: 74.2433 },
+} as const;
+
+export type CityId = keyof typeof CITY_CENTERS;
+
+export const CITY_IDS = Object.keys(CITY_CENTERS) as CityId[];
+
+/**
  * City-wide framing on open. A tighter zoom here seemed like the fix for
  * clustering hiding stations (see GROUP_MAX_ZOOM in StationMap.tsx for why
  * that isn't the right lever), but it backfires whenever the device's real

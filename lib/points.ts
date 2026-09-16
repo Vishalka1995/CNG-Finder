@@ -72,16 +72,43 @@ export async function getMyPoints(): Promise<UserPointsRow | null> {
   if (isShowcase()) return SHOWCASE_POINTS;
 
   try {
-    const { data, error } = await supabase
-      .from("user_points")
-      .select("*")
-      .maybeSingle();
+    const { data, error } = await supabase.from("user_points").select("*").maybeSingle();
 
     if (error) return null;
 
     return data;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Points earned per report, keyed by database report id.
+ *
+ * One query rather than one per report: the history screen shows a page of
+ * them at a time, and a request each would be a round trip per row.
+ */
+export async function getPointsByReport(): Promise<Record<string, number>> {
+  if (isShowcase()) return {};
+
+  try {
+    const { data, error } = await supabase
+      .from("point_transactions")
+      .select("report_id, points")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (error || !data) return {};
+
+    const totals: Record<string, number> = {};
+    for (const row of data) {
+      if (!row.report_id) continue;
+      totals[row.report_id] = (totals[row.report_id] ?? 0) + row.points;
+    }
+
+    return totals;
+  } catch {
+    return {};
   }
 }
 

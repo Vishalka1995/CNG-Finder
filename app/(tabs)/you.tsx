@@ -1,6 +1,17 @@
 import Constants from "expo-constants";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Bell, ChevronRight, Info, Mail, RadioTower, Share2, Star } from "lucide-react-native";
+import {
+  Bell,
+  Check,
+  ChevronRight,
+  HelpCircle,
+  Info,
+  Mail,
+  MapPin,
+  RadioTower,
+  Share2,
+  Star,
+} from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Share, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BadgeGrid } from "@/components/points/BadgeGrid";
 import { PointsCard } from "@/components/points/PointsCard";
 import { COLORS } from "@/constants/colors";
-import { isDemoMode } from "@/constants/config";
+import { CITY_IDS, isDemoMode } from "@/constants/config";
 import { getDeviceId } from "@/lib/device";
 import { getCurrentCoords } from "@/lib/location";
 import { getMyBadges, getMyPoints } from "@/lib/points";
@@ -80,9 +91,11 @@ export default function YouScreen() {
   const {
     notificationsEnabled,
     showcaseMode,
+    homeCity,
     load: loadPreferences,
     setNotificationsEnabled,
     setShowcaseMode,
+    setHomeCity,
   } = usePreferencesStore();
 
   const fetchNearby = useStationStore((state) => state.fetchNearby);
@@ -151,8 +164,8 @@ export default function YouScreen() {
           <View className="mt-4 rounded-xl bg-queue/15 px-4 py-3">
             <Text className="font-medium text-caption text-ink">Demo mode</Text>
             <Text className="mt-1 font-sans text-label text-muted">
-              Showing built-in sample stations. Add your Supabase keys to .env to see
-              real data.
+              Showing built-in sample stations. Add your Supabase keys to .env to see real
+              data.
             </Text>
           </View>
         ) : null}
@@ -161,6 +174,14 @@ export default function YouScreen() {
         <Text className="mt-6 font-semibold text-caption text-muted">YOUR POINTS</Text>
 
         <PointsCard points={points} isLoading={loadingPoints} />
+
+        <View className="mt-2 rounded-2xl bg-slate-50 px-4">
+          <SettingsRow
+            icon={<HelpCircle color={COLORS.muted} size={18} />}
+            label="How points work"
+            onPress={() => router.push("/how-points-work")}
+          />
+        </View>
 
         {/* Badges */}
         <Text className="mt-8 font-semibold text-caption text-muted">BADGES</Text>
@@ -173,9 +194,9 @@ export default function YouScreen() {
         <View className="mt-1 flex-row rounded-2xl bg-slate-50 p-4">
           <Info color={COLORS.muted} size={18} />
           <Text className="ml-3 flex-1 font-sans text-label leading-5 text-muted">
-            CNG Now shows live station availability based on reports from other drivers.
-            A report counts for less as it ages, so a green station means someone
-            confirmed gas recently — not hours ago.
+            CNG Now shows live station availability based on reports from other drivers. A
+            report counts for less as it ages, so a green station means someone confirmed
+            gas recently — not hours ago.
           </Text>
         </View>
 
@@ -188,6 +209,35 @@ export default function YouScreen() {
             label="My reports"
             onPress={() => router.push("/my-reports")}
           />
+        </View>
+
+        {/* Home city -- only consulted when no real fix is available. */}
+        <Text className="mt-8 font-semibold text-caption text-muted">HOME CITY</Text>
+
+        <Text className="mt-1 font-sans text-label leading-5 text-muted">
+          Where to show stations when your location cannot be found.
+        </Text>
+
+        <View className="mt-2 rounded-2xl bg-slate-50 px-4">
+          {CITY_IDS.map((city, index) => (
+            <View key={city}>
+              {index > 0 ? <View className="h-px bg-slate-200" /> : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: homeCity === city }}
+                onPress={() => void setHomeCity(homeCity === city ? null : city)}
+                className="flex-row items-center py-4 active:opacity-60"
+              >
+                <MapPin color={COLORS.muted} size={18} />
+                <Text className="ml-3 flex-1 font-sans text-caption text-ink">
+                  {city}
+                </Text>
+                {homeCity === city ? (
+                  <Check color={COLORS.primary} size={18} strokeWidth={2.5} />
+                ) : null}
+              </Pressable>
+            </View>
+          ))}
         </View>
 
         {/* Notifications */}
@@ -247,8 +297,8 @@ export default function YouScreen() {
               <View className="flex-1 pr-3">
                 <Text className="font-sans text-caption text-ink">Showcase mode</Text>
                 <Text className="mt-0.5 font-sans text-label text-muted">
-                  Fills the app with sample activity for demos. On-device only —
-                  nothing is saved or sent.
+                  Fills the app with sample activity for demos. On-device only — nothing
+                  is saved or sent.
                 </Text>
               </View>
               <Switch
