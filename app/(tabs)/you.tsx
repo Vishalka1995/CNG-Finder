@@ -10,7 +10,9 @@ import {
   MapPin,
   RadioTower,
   Share2,
+  Shield,
   Star,
+  Trophy,
 } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, Share, Switch, Text, View } from "react-native";
@@ -273,6 +275,23 @@ export default function YouScreen() {
             icon={<Star color={COLORS.muted} size={18} />}
             label="Rate the app"
             onPress={sendFeedback}
+          />
+        </View>
+
+        {/* Legal */}
+        <Text className="mt-8 font-semibold text-caption text-muted">ABOUT</Text>
+
+        <View className="mt-1 rounded-2xl bg-slate-50 px-4">
+          <SettingsRow
+            icon={<Trophy color={COLORS.muted} size={18} />}
+            label="Contest rules"
+            onPress={() => router.push("/contest-rules")}
+          />
+          <View className="h-px bg-slate-200" />
+          <SettingsRow
+            icon={<Shield color={COLORS.muted} size={18} />}
+            label="Terms & privacy"
+            onPress={() => router.push("/privacy")}
           />
         </View>
 
