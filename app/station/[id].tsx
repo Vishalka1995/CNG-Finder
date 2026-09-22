@@ -6,6 +6,7 @@ import {
   Heart,
   Navigation,
   Phone,
+  ShieldCheck,
   Store,
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -47,6 +48,7 @@ import { parseReportError, supabase, toPointWKT } from "@/lib/supabase";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { usePreferencesStore } from "@/stores/preferencesStore";
 import { useReportStore } from "@/stores/reportStore";
+import { useAdminStore } from "@/stores/adminStore";
 import { useStationStore } from "@/stores/stationStore";
 import { showToast } from "@/stores/toastStore";
 import type { StationReport, StationStatus } from "@/types/database";
@@ -95,6 +97,7 @@ export default function StationDetailScreen() {
   const applyOptimisticReport = useStationStore((state) => state.applyOptimisticReport);
   const recordReport = useReportStore((state) => state.record);
   const myReports = useReportStore((state) => state.reports);
+  const isAdmin = useAdminStore((state) => state.isAdmin);
   const loadMyReports = useReportStore((state) => state.load);
 
   const { ids: favoriteIds, load: loadFavorites, toggle } = useFavoriteStore();
@@ -308,23 +311,30 @@ export default function StationDetailScreen() {
 
       // Real submission. The DB trigger is the authority on both the rate limit
       // and proximity; the check here only saves a pointless round trip.
+      //
+      // Admins skip both, so a report can be made from a desk. Skipping them
+      // here only avoids blocking a request the server would have accepted --
+      // the trigger makes the same decision again, from the database.
+      const isAdmin = useAdminStore.getState().isAdmin;
       const fix = await getCurrentCoords();
 
-      if (fix.isFallback) {
-        failWith(messageForError("LOCATION_REQUIRED"));
-        return;
-      }
-
-      if (station) {
-        const away = distanceMeters(fix.coords, {
-          latitude: station.latitude,
-          longitude: station.longitude,
-        });
-        if (away > REPORT_PROXIMITY_M) {
-          failWith(
-            `You are ${formatDistance(away)} from this station. Get within ${REPORT_PROXIMITY_M} m to report.`,
-          );
+      if (!isAdmin) {
+        if (fix.isFallback) {
+          failWith(messageForError("LOCATION_REQUIRED"));
           return;
+        }
+
+        if (station) {
+          const away = distanceMeters(fix.coords, {
+            latitude: station.latitude,
+            longitude: station.longitude,
+          });
+          if (away > REPORT_PROXIMITY_M) {
+            failWith(
+              `You are ${formatDistance(away)} from this station. Get within ${REPORT_PROXIMITY_M} m to report.`,
+            );
+            return;
+          }
         }
       }
 
@@ -339,7 +349,9 @@ export default function StationDetailScreen() {
           status: selected,
           note: null,
           device_id: deviceId,
-          reported_location: toPointWKT(fix.coords.longitude, fix.coords.latitude),
+          reported_location: fix.isFallback
+            ? null
+            : toPointWKT(fix.coords.longitude, fix.coords.latitude),
         })
         .select("id")
         .single();
@@ -544,7 +556,21 @@ export default function StationDetailScreen() {
         </View>
 
         {/* Report status -- always visible, no separate screen */}
-        <Text className="mt-8 font-semibold text-heading text-ink">Report status</Text>
+        <View className="mt-8 flex-row items-center">
+          <Text className="flex-1 font-semibold text-heading text-ink">
+            Report status
+          </Text>
+
+          {/* Says why the usual limits are not applying here. */}
+          {isAdmin ? (
+            <View className="flex-row items-center rounded-xl bg-queue/15 px-3 py-1.5">
+              <ShieldCheck color={COLORS.queue} size={14} />
+              <Text className="ml-1.5 font-semibold text-label text-ink">
+                Admin — no limits
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <Text className="mt-1 font-sans text-body text-muted">
           How is the CNG availability right now?
         </Text>

@@ -33,7 +33,7 @@ export type NearbyStation = {
   confidence: ConfidenceLevel;
   report_count: number;
   last_reported_at: string | null;
-}
+};
 
 /** A row as returned by the `station_reports` RPC. Carries no reporter identity. */
 export type StationReport = {
@@ -41,7 +41,7 @@ export type StationReport = {
   status: StationStatus;
   note: string | null;
   created_at: string;
-}
+};
 
 export type StationRow = {
   id: string;
@@ -58,7 +58,7 @@ export type StationRow = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
 export type UserRow = {
   id: string;
@@ -69,14 +69,14 @@ export type UserRow = {
   trust_score: number;
   created_at: string;
   last_seen_at: string;
-}
+};
 
 export type FavoriteRow = {
   id: string;
   auth_user_id: string;
   station_id: string;
   created_at: string;
-}
+};
 
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
@@ -115,8 +115,9 @@ export type ReportInsert = {
   status: StationStatus;
   note?: string | null;
   device_id?: string | null;
-  reported_location: string;
-}
+  /** Null only for admin reports, which the trigger allows to omit it. */
+  reported_location: string | null;
+};
 
 /** Why points moved. Mirrors the `point_reason` enum in migration 0008. */
 export type PointReason =
@@ -137,13 +138,13 @@ export type PointTransactionRow = {
   points: number;
   reason: PointReason;
   created_at: string;
-}
+};
 
 export type BadgeRow = {
   auth_user_id: string;
   badge_id: string;
   earned_at: string;
-}
+};
 
 /** One row of this month's standings. Deliberately carries no auth_user_id --
  *  nothing on screen needs it, and it is the handle to somebody's account. */
@@ -154,7 +155,7 @@ export type LeaderboardRow = {
   points: number;
   reports: number;
   is_me: boolean;
-}
+};
 
 /** One podium place in a past month. Carries nothing that could identify or
  *  pay someone -- see hall_of_fame() in migration 0013. */
@@ -165,14 +166,14 @@ export type HallOfFameRow = {
   winner_city: string | null;
   points: number;
   prize: string | null;
-}
+};
 
 export type MyPlaceRow = {
   place: number;
   points: number;
   reports: number;
   total_drivers: number;
-}
+};
 
 export type UserPointsRow = {
   auth_user_id: string;
@@ -187,7 +188,7 @@ export type UserPointsRow = {
   longest_streak: number;
   last_report_date: string | null;
   updated_at: string;
-}
+};
 
 /**
  * Schema shape expected by supabase-js.
@@ -301,6 +302,11 @@ export interface Database {
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
         Args: {};
         Returns: MyPlaceRow[];
+      };
+      is_admin: {
+        // Defaults to the caller; the app never passes one.
+        Args: { p_user?: string };
+        Returns: boolean;
       };
       hall_of_fame: {
         Args: { max_months?: number };

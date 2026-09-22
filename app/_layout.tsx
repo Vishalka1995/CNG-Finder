@@ -20,6 +20,7 @@ import { StatusBar } from "expo-status-bar";
 
 import { Toast } from "@/components/ui/Toast";
 import { ensureSession } from "@/lib/device";
+import { useAdminStore } from "@/stores/adminStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 
 void SplashScreen.preventAutoHideAsync();
@@ -53,6 +54,10 @@ export default function RootLayout() {
       }
 
       if (!cancelled) setBootstrapped(true);
+
+      // Asked once the session exists, or there is nobody to ask about.
+      // Not awaited: a normal driver is the default and nothing waits on it.
+      void useAdminStore.getState().load();
     };
 
     void bootstrap();

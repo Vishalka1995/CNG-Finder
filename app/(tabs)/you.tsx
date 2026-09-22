@@ -11,6 +11,7 @@ import {
   RadioTower,
   Share2,
   Shield,
+  ShieldCheck,
   Star,
   Trophy,
 } from "lucide-react-native";
@@ -26,6 +27,7 @@ import { getDeviceId } from "@/lib/device";
 import { getCurrentCoords } from "@/lib/location";
 import { getMyBadges, getMyPoints } from "@/lib/points";
 import { supabase } from "@/lib/supabase";
+import { useAdminStore } from "@/stores/adminStore";
 import { usePreferencesStore } from "@/stores/preferencesStore";
 import { useStationStore } from "@/stores/stationStore";
 import type { UserPointsRow } from "@/types/database";
@@ -101,6 +103,7 @@ export default function YouScreen() {
   } = usePreferencesStore();
 
   const fetchNearby = useStationStore((state) => state.fetchNearby);
+  const isAdmin = useAdminStore((state) => state.isAdmin);
 
   /** Station statuses are synthesised at fetch time, so flipping the switch
    *  has to refetch or the map keeps whatever it already had. */
@@ -160,7 +163,18 @@ export default function YouScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <ScrollView contentContainerClassName="px-6 py-6">
-        <Text className="font-bold text-title text-ink">You</Text>
+        <View className="flex-row items-center">
+          <Text className="flex-1 font-bold text-title text-ink">You</Text>
+
+          {/* Which account this is matters when one of them ignores the
+              rules -- easy to forget otherwise. */}
+          {isAdmin ? (
+            <View className="flex-row items-center rounded-xl bg-queue/15 px-3 py-1.5">
+              <ShieldCheck color={COLORS.queue} size={14} />
+              <Text className="ml-1.5 font-semibold text-label text-ink">Admin</Text>
+            </View>
+          ) : null}
+        </View>
 
         {isDemoMode() ? (
           <View className="mt-4 rounded-xl bg-queue/15 px-4 py-3">
