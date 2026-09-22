@@ -21,9 +21,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BadgeGrid } from "@/components/points/BadgeGrid";
 import { PointsCard } from "@/components/points/PointsCard";
+import { SaveAccountCard } from "@/components/points/SaveAccountCard";
 import { COLORS } from "@/constants/colors";
 import { CITY_IDS, isDemoMode } from "@/constants/config";
 import { getDeviceId } from "@/lib/device";
+import { getLinkedGoogleEmail } from "@/lib/googleAuth";
 import { getCurrentCoords } from "@/lib/location";
 import { getMyBadges, getMyPoints } from "@/lib/points";
 import { supabase } from "@/lib/supabase";
@@ -91,6 +93,7 @@ export default function YouScreen() {
   const [points, setPoints] = useState<UserPointsRow | null>(null);
   const [badges, setBadges] = useState<string[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(true);
+  const [linkedEmail, setLinkedEmail] = useState<string | null>(null);
 
   const {
     notificationsEnabled,
@@ -132,10 +135,15 @@ export default function YouScreen() {
       let cancelled = false;
 
       const load = async (): Promise<void> => {
-        const [result, earned] = await Promise.all([getMyPoints(), getMyBadges()]);
+        const [result, earned, email] = await Promise.all([
+          getMyPoints(),
+          getMyBadges(),
+          getLinkedGoogleEmail(),
+        ]);
         if (cancelled) return;
         setPoints(result);
         setBadges(earned);
+        setLinkedEmail(email);
         setLoadingPoints(false);
       };
 
@@ -190,6 +198,15 @@ export default function YouScreen() {
         <Text className="mt-6 font-semibold text-caption text-muted">YOUR POINTS</Text>
 
         <PointsCard points={points} isLoading={loadingPoints} />
+
+        <SaveAccountCard
+          linkedEmail={linkedEmail}
+          hasPoints={(points?.total_points ?? 0) > 0}
+          onLinked={() => {
+            void getLinkedGoogleEmail().then(setLinkedEmail);
+            void useAdminStore.getState().load();
+          }}
+        />
 
         <View className="mt-2 rounded-2xl bg-slate-50 px-4">
           <SettingsRow

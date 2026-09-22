@@ -54,6 +54,7 @@
         }
       ],
       "@maplibre/maplibre-react-native",
+      "expo-web-browser",
       [
         "expo-build-properties",
         {
