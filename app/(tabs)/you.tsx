@@ -127,6 +127,26 @@ export default function YouScreen() {
     void loadPreferences();
   }, [loadPreferences]);
 
+  // Signing in changes the account underneath this screen, and the moment it
+  // lands does not line up with the navigation back from the browser -- so a
+  // refetch triggered by focus can run before the new session exists and leave
+  // the sign-in button up on an account that just signed in. Listening to auth
+  // itself is the only version of this without a race.
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null);
+
+      void getLinkedGoogleEmail().then(setLinkedEmail);
+      void useAdminStore.getState().load();
+      void Promise.all([getMyPoints(), getMyBadges()]).then(([result, earned]) => {
+        setPoints(result);
+        setBadges(earned);
+      });
+    });
+
+    return () => data.subscription.unsubscribe();
+  }, []);
+
   // Refetched on every focus, not just on mount: the most common way to arrive
   // here is straight after reporting, and stale totals would undercut the
   // whole point of showing them.
