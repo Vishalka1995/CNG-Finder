@@ -44,8 +44,6 @@ export function SaveAccountCard({
     );
   }
 
-  if (!hasPoints) return null;
-
   const link = async (): Promise<void> => {
     setBusy(true);
     try {
@@ -68,11 +66,17 @@ export function SaveAccountCard({
   };
 
   return (
-    <View className="mt-1 rounded-2xl bg-queue/15 p-4">
-      <Text className="font-semibold text-caption text-ink">Save your points</Text>
+    // Urgent-looking once there is something to lose, quiet before then. It is
+    // always offered though: someone who wants their account secured should
+    // not have to earn points first to find the option.
+    <View className={`mt-1 rounded-2xl p-4 ${hasPoints ? "bg-queue/15" : "bg-slate-50"}`}>
+      <Text className="font-semibold text-caption text-ink">
+        {hasPoints ? "Save your points" : "Save your account"}
+      </Text>
       <Text className="mt-1 font-sans text-label leading-5 text-muted">
-        Your points live on this phone only. Sign in with Google and you will keep them if
-        you change phone or reinstall the app.
+        {hasPoints
+          ? "Your points live on this phone only. Sign in with Google and you will keep them if you change phone or reinstall the app."
+          : "Sign in with Google so your points and badges follow you if you change phone or reinstall the app."}
       </Text>
 
       <Pressable
