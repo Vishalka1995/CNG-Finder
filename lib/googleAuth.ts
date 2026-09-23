@@ -35,18 +35,47 @@ function redirectUrl(): string {
 }
 
 /**
+ * Polls for a Google identity on the account.
+ *
+ * The session may be established by the callback screen rather than here, and
+ * it lands a moment after the browser closes, so a single check taken straight
+ * away can miss it.
+ */
+async function waitForGoogleIdentity(): Promise<boolean> {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    if (await getLinkedGoogleEmail()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  return false;
+}
+
+/**
  * Runs one leg of the OAuth dance: open the provider URL, wait for the
  * redirect back, and turn the code it carries into a session.
+ *
+ * The browser's own verdict is not trusted on its own. Android delivers the
+ * redirect to the app as a deep link as well, so the callback screen often
+ * redeems the code first and the browser then reports a plain dismissal --
+ * which looked identical to the driver cancelling, and was reported to them as
+ * exactly that despite having worked. So whatever the browser says, the
+ * question actually asked is whether the account now carries a Google
+ * identity.
  */
 async function completeInBrowser(url: string, redirectTo: string): Promise<boolean> {
   const result = await WebBrowser.openAuthSessionAsync(url, redirectTo);
-  if (result.type !== "success") return false;
 
-  const code = Linking.parse(result.url).queryParams?.["code"];
-  if (typeof code !== "string") return false;
+  if (result.type === "success") {
+    const code = Linking.parse(result.url).queryParams?.["code"];
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  return !error;
+    if (typeof code === "string") {
+      // Harmless if the callback screen got there first: the failure that
+      // causes is answered by the check below.
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error) return true;
+    }
+  }
+
+  return waitForGoogleIdentity();
 }
 
 /**
