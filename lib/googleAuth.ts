@@ -118,6 +118,16 @@ export async function signInWithGoogle(): Promise<GoogleAuthOutcome> {
       return { ok: false, message: "Sign-in was cancelled." };
     }
 
+    // Falling back here abandons whatever the anonymous account held, so why
+    // it happened is worth saying out loud. Silently dropping to sign-in is
+    // how an account was replaced rather than linked, with nothing on screen
+    // or in the log to show for it.
+    console.warn(
+      "[auth] linkIdentity unavailable, falling back to sign-in:",
+      linkError?.message ?? "no url returned",
+      linkError,
+    );
+
     // Already attached to a different account, or manual linking is off in the
     // project settings. Either way, signing in is the thing that helps.
     const { data: signInData, error: signInError } = await supabase.auth.signInWithOAuth({
