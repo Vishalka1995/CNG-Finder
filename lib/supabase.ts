@@ -36,6 +36,18 @@ export const supabase = createClient<Database>(
       persistSession: true,
       // Required on native: there is no URL to parse a session out of.
       detectSessionInUrl: false,
+      /**
+       * Google sign-in depends on this. The default, implicit flow, returns
+       * tokens in the redirect's URL *fragment* -- which never reaches
+       * exchangeCodeForSession, so the callback found nothing to redeem and
+       * every attempt ended reporting failure.
+       *
+       * PKCE returns `?code=` instead, which is what lib/googleAuth.ts and the
+       * callback screen both expect, and is the flow Supabase recommends on
+       * mobile: the code alone is useless without the verifier, which never
+       * leaves the device.
+       */
+      flowType: "pkce",
     },
   },
 );
@@ -80,15 +92,9 @@ export function parseReportError(message: string | undefined): ReportErrorCode {
 
 /** Error codes raised by the `enforce_submission_rules` trigger. */
 export type SubmissionErrorCode =
-  | "AUTH_REQUIRED"
-  | "ALREADY_EXISTS"
-  | "ALREADY_SUBMITTED"
-  | "RATE_LIMITED"
-  | "UNKNOWN";
+  "AUTH_REQUIRED" | "ALREADY_EXISTS" | "ALREADY_SUBMITTED" | "RATE_LIMITED" | "UNKNOWN";
 
-export function parseSubmissionError(
-  message: string | undefined,
-): SubmissionErrorCode {
+export function parseSubmissionError(message: string | undefined): SubmissionErrorCode {
   if (!message) return "UNKNOWN";
   const codes: SubmissionErrorCode[] = [
     "AUTH_REQUIRED",

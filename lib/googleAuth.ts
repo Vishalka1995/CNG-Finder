@@ -65,6 +65,15 @@ async function completeInBrowser(url: string, redirectTo: string): Promise<boole
   const result = await WebBrowser.openAuthSessionAsync(url, redirectTo);
 
   if (result.type === "success") {
+    // Parameter NAMES only -- the values are credentials. Enough to tell a
+    // missing code from a rejected one, which is the distinction that has
+    // cost the most time here.
+    console.warn(
+      "[auth] redirect:",
+      result.type,
+      Object.keys(Linking.parse(result.url).queryParams ?? {}),
+    );
+
     const code = Linking.parse(result.url).queryParams?.["code"];
 
     if (typeof code === "string") {
