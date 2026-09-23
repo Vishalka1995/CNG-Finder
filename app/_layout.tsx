@@ -100,6 +100,8 @@ export default function RootLayout() {
           <Stack.Screen name="search" />
           <Stack.Screen name="my-reports" />
           <Stack.Screen name="hall-of-fame" />
+          {/* Google redirects back here; see app/auth/callback.tsx. */}
+          <Stack.Screen name="auth/callback" options={{ animation: "none" }} />
           <Stack.Screen name="how-points-work" />
           <Stack.Screen name="contest-rules" />
           <Stack.Screen name="privacy" />
