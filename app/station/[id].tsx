@@ -25,7 +25,7 @@ import { ReportTimeline } from "@/components/station/ReportTimeline";
 import { StatusBadge } from "@/components/station/StatusBadge";
 import { StatusPicker } from "@/components/station/StatusPicker";
 import { Button } from "@/components/ui/Button";
-import { COLORS } from "@/constants/colors";
+import { COLORS, STATUS_COLORS } from "@/constants/colors";
 import { REPORT_COOLDOWN_MIN, REPORT_PROXIMITY_M, isDemoMode } from "@/constants/config";
 import { confidenceLabel, timeAgo } from "@/lib/confidence";
 import {
@@ -357,6 +357,10 @@ export default function StationDetailScreen() {
         .single();
 
       if (insertError) {
+        // Only five codes are recognised; anything else reaches the driver as
+        // a generic apology with the cause thrown away. Log the real thing so
+        // an unfamiliar failure is diagnosable rather than invisible.
+        console.warn("[report] insert failed:", insertError.message, insertError);
         failWith(messageForError(parseReportError(insertError.message)));
         return;
       }
@@ -603,13 +607,19 @@ export default function StationDetailScreen() {
             </View>
           ) : sending ? (
             // Getting a fix and writing the report is a second or two of real
-            // work. Without this the tap appears to do nothing at all, which
-            // invites a second tap on a different status.
-            <View className="flex-row items-center rounded-2xl bg-slate-100 px-4 py-4">
-              <ActivityIndicator color={COLORS.primary} />
-              <StatusBadge status={sending} />
-              <Text className="ml-2 flex-1 font-medium text-caption text-muted">
-                Sending your report…
+            // work, so the tap has to visibly do something.
+            //
+            // The chosen status becomes the whole background rather than
+            // sitting in a badge beside the text: at a glance, from arm's
+            // length, the colour alone says which one was tapped, and there is
+            // one thing to read instead of three.
+            <View
+              style={{ backgroundColor: STATUS_COLORS[sending] }}
+              className="flex-row items-center rounded-2xl px-4 py-4"
+            >
+              <ActivityIndicator color="#FFFFFF" />
+              <Text className="ml-3 flex-1 font-semibold text-caption text-white">
+                Submitting your report…
               </Text>
             </View>
           ) : (
