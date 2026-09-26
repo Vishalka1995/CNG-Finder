@@ -61,30 +61,54 @@ async function waitForGoogleIdentity(): Promise<boolean> {
  * question actually asked is whether the account now carries a Google
  * identity.
  */
-async function completeInBrowser(url: string, redirectTo: string): Promise<boolean> {
+type LegResult =
+  /** A session now exists on this account. */
+  | "ok"
+  /** The driver backed out. */
+  | "cancelled"
+  /** This Google account belongs to a different account already -- the
+   *  reinstall case, where signing in is what was wanted all along. */
+  | "already-linked"
+  /** Rejected for some other reason; the log carries it. */
+  | "failed";
+
+async function completeInBrowser(url: string, redirectTo: string): Promise<LegResult> {
   const result = await WebBrowser.openAuthSessionAsync(url, redirectTo);
 
   if (result.type === "success") {
-    // Parameter NAMES only -- the values are credentials. Enough to tell a
-    // missing code from a rejected one, which is the distinction that has
-    // cost the most time here.
-    console.warn(
-      "[auth] redirect:",
-      result.type,
-      Object.keys(Linking.parse(result.url).queryParams ?? {}),
-    );
+    const params = Linking.parse(result.url).queryParams ?? {};
 
-    const code = Linking.parse(result.url).queryParams?.["code"];
+    // Names for everything -- the values are credentials -- but the error
+    // fields in full, since those are diagnostic text rather than secrets and
+    // are the only thing that says WHY a redirect came back empty-handed.
+    console.warn("[auth] redirect:", result.type, Object.keys(params));
+
+    if (params["error"] || params["error_description"]) {
+      console.warn(
+        "[auth] provider rejected it:",
+        params["error"],
+        params["error_code"],
+        params["error_description"],
+      );
+
+      // Not a failure so much as an answer: this Google account belongs to an
+      // account that already exists, so signing into it is the thing to do.
+      if (params["error_code"] === "identity_already_exists") return "already-linked";
+
+      return "failed";
+    }
+
+    const code = params["code"];
 
     if (typeof code === "string") {
       // Harmless if the callback screen got there first: the failure that
       // causes is answered by the check below.
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (!error) return true;
+      if (!error) return "ok";
     }
   }
 
-  return waitForGoogleIdentity();
+  return (await waitForGoogleIdentity()) ? "ok" : "cancelled";
 }
 
 /**
@@ -112,10 +136,14 @@ export async function signInWithGoogle(): Promise<GoogleAuthOutcome> {
     });
 
     if (!linkError && linkData?.url) {
-      if (await completeInBrowser(linkData.url, redirectTo)) {
-        return { ok: true, restored: false };
-      }
-      return { ok: false, message: "Sign-in was cancelled." };
+      const linked = await completeInBrowser(linkData.url, redirectTo);
+
+      if (linked === "ok") return { ok: true, restored: false };
+      if (linked === "cancelled") return { ok: false, message: "Sign-in was cancelled." };
+
+      // "already-linked" and "failed" both fall through to signing in. The
+      // first is the reinstall case and is expected; the second is logged
+      // above, and signing in is still the better answer than giving up.
     }
 
     // Falling back here abandons whatever the anonymous account held, so why
@@ -139,11 +167,12 @@ export async function signInWithGoogle(): Promise<GoogleAuthOutcome> {
       return { ok: false, message: "Could not reach Google. Check your connection." };
     }
 
-    if (await completeInBrowser(signInData.url, redirectTo)) {
-      return { ok: true, restored: true };
-    }
+    const signedIn = await completeInBrowser(signInData.url, redirectTo);
 
-    return { ok: false, message: "Sign-in was cancelled." };
+    if (signedIn === "ok") return { ok: true, restored: true };
+    if (signedIn === "cancelled") return { ok: false, message: "Sign-in was cancelled." };
+
+    return { ok: false, message: "Could not sign in with Google. Please try again." };
   } catch {
     return { ok: false, message: "Something went wrong signing in." };
   }
