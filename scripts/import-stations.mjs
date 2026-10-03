@@ -54,6 +54,25 @@ const CITIES = {
     name: "Kolhapur",
     bounds: { south: 16.0, west: 73.8, north: 17.0, east: 74.7 },
   },
+  /**
+   * Whole-state boxes, for the statewide OpenStreetMap pulls.
+   *
+   * These are far looser than a city box, so they catch less -- but the thing
+   * they exist to catch is a transposed coordinate, and that still fails
+   * loudly: an Indian longitude (68-97) can never pass as a latitude here.
+   */
+  maharashtra: {
+    name: "Maharashtra",
+    bounds: { south: 15.5, west: 72.5, north: 22.2, east: 81.0 },
+  },
+  karnataka: {
+    name: "Karnataka",
+    bounds: { south: 11.4, west: 73.9, north: 18.6, east: 78.7 },
+  },
+  "mh-ka": {
+    name: "Maharashtra + Karnataka",
+    bounds: { south: 11.4, west: 72.5, north: 22.2, east: 81.0 },
+  },
 };
 
 const cityArg = (() => {
@@ -151,6 +170,74 @@ function parseCSV(text) {
     });
     return record;
   });
+}
+
+/**
+ * How close two pins must be to be treated as the same physical station.
+ *
+ * Different sources name the same pump differently -- "Rathi Cng gas Station"
+ * in OpenStreetMap is "Rathi CNG station" on MNGL's own list, 29 m apart -- so
+ * names cannot be matched on. Position can. Measured across the OSM and MNGL
+ * lists for Pune, every genuine match sat under 50 m and nothing at all fell
+ * between 50 m and 300 m, so 100 m separates the two cases cleanly with room
+ * to spare.
+ */
+const SAME_STATION_METRES = 100;
+
+/** Metres between two coordinates (equirectangular -- exact enough at 100 m). */
+function metresBetween(a, b) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const x = toRad(b.longitude - a.longitude) * Math.cos(toRad((a.latitude + b.latitude) / 2));
+  const y = toRad(b.latitude - a.latitude);
+  return Math.sqrt(x * x + y * y) * R;
+}
+
+/**
+ * Every station already in the database, so an import from a second source
+ * does not re-add pumps the first source already covered.
+ *
+ * Uses the nearby_stations RPC because `location` is a PostGIS geography column
+ * and PostgREST cannot serialise it directly -- that RPC already projects it
+ * back out as plain latitude/longitude. One call with a radius wide enough to
+ * cover India beats one call per candidate row.
+ *
+ * Best-effort: if this fails the import still proceeds, because failing to
+ * read is not a reason to refuse to write. It says so loudly instead.
+ */
+async function fetchExistingStations(env) {
+  try {
+    const { stdout } = await execFileAsync(
+      "curl",
+      [
+        "-sS", "--max-time", "120", "-X", "POST",
+        `${env.SUPABASE_URL}/rest/v1/rpc/nearby_stations`,
+        "-H", `apikey: ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "-H", `Authorization: Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "-H", "Content-Type: application/json",
+        "--data-binary",
+        JSON.stringify({
+          // Centre of India, radius wide enough to reach every corner.
+          lat: 22.0, lng: 79.0, radius_m: 2500000, max_results: 20000,
+        }),
+      ],
+      { maxBuffer: 64 * 1024 * 1024 },
+    );
+
+    const parsed = JSON.parse(stdout);
+    if (!Array.isArray(parsed)) return null;
+
+    return parsed
+      .map((row) => ({
+        osm_id: row.osm_id ?? null,
+        name: row.name ?? "",
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+      }))
+      .filter((row) => Number.isFinite(row.latitude) && Number.isFinite(row.longitude));
+  } catch {
+    return null;
+  }
 }
 
 /** Stable id for a hand-added station, so re-imports update rather than duplicate. */
@@ -338,7 +425,36 @@ async function main() {
     process.stdout.write(`Duplicate osm_id values: ${duplicates.join(", ")}\n\n`);
   }
 
-  const toImport = [...byId.values()];
+  const deduped = [...byId.values()];
+
+  // Two rows in the same file describing one pump. Keeps the first and reports
+  // the rest rather than dropping them silently.
+  const nearDuplicates = [];
+  const toImport = [];
+  for (const station of deduped) {
+    const clash = toImport.find(
+      (kept) =>
+        metresBetween(
+          { latitude: Number(kept.latitude), longitude: Number(kept.longitude) },
+          { latitude: Number(station.latitude), longitude: Number(station.longitude) },
+        ) < SAME_STATION_METRES,
+    );
+
+    if (clash) {
+      nearDuplicates.push(`${station.name} ~ ${clash.name} (same file)`);
+    } else {
+      toImport.push(station);
+    }
+  }
+
+  if (nearDuplicates.length > 0) {
+    process.stdout.write(
+      `Skipped ${nearDuplicates.length} row(s) within ${SAME_STATION_METRES} m of another row in this file:\n`,
+    );
+    for (const note of nearDuplicates.slice(0, 20)) process.stdout.write(`  - ${note}\n`);
+    process.stdout.write("\n");
+  }
+
 
   const stillFlagged = rows.filter((row) => (row.needs_review ?? "").trim()).length;
   if (stillFlagged > 0) {
@@ -375,12 +491,47 @@ async function main() {
     );
   }
 
-  process.stdout.write(`Importing ${toImport.length} station(s)…\n`);
+  // Stations a previous import already covers, matched by position rather than
+  // by id -- a different source gives the same pump a different osm_id.
+  const existing = await fetchExistingStations(env);
+  let finalList = toImport;
+
+  if (existing === null) {
+    process.stdout.write(
+      "WARNING: could not read existing stations, so duplicates against\n" +
+        "         earlier imports cannot be detected. Proceeding anyway.\n\n",
+    );
+  } else {
+    const alreadyThere = [];
+    finalList = toImport.filter((station) => {
+      const point = {
+        latitude: Number(station.latitude),
+        longitude: Number(station.longitude),
+      };
+      const match = existing.find(
+        (row) => row.osm_id !== station.osm_id && metresBetween(row, point) < SAME_STATION_METRES,
+      );
+      if (match) {
+        alreadyThere.push(`${station.name} ~ "${match.name}" already in database`);
+        return false;
+      }
+      return true;
+    });
+
+    process.stdout.write(`Database already holds ${existing.length} station(s).\n`);
+    if (alreadyThere.length > 0) {
+      process.stdout.write(`Skipping ${alreadyThere.length} already covered:\n`);
+      for (const note of alreadyThere.slice(0, 20)) process.stdout.write(`  - ${note}\n`);
+    }
+    process.stdout.write("\n");
+  }
+
+  process.stdout.write(`Importing ${finalList.length} station(s)…\n`);
 
   let ok = 0;
   const failures = [];
 
-  for (const station of toImport) {
+  for (const station of finalList) {
     try {
       await upsertStation(env, station);
       ok += 1;
@@ -389,7 +540,7 @@ async function main() {
     }
   }
 
-  process.stdout.write(`\nImported ${ok}/${toImport.length}\n`);
+  process.stdout.write(`\nImported ${ok}/${finalList.length}\n`);
 
   if (failures.length > 0) {
     process.stdout.write("\nFailures:\n");

@@ -1,0 +1,212 @@
+osm_id,name,operator,address,area,state,latitude,longitude,is_24x7,opening_hours,phone,needs_review
+mngl/1-lt-col-shaheed-prakash-patil,Lt. col. Shaheed Prakash Patil,MNGL,Ambegaon,PMC,Maharashtra,18.457583,73.828944,,,,
+mngl/2-vardhman-petrol-depot,Vardhman Petrol Depot,MNGL,Warje,PMC,Maharashtra,18.482972,73.802250,,,,
+mngl/3-chaudhary-cng,Chaudhary CNG,MNGL,Warje,PMC,Maharashtra,18.482278,73.803056,,,,
+mngl/4-sai-sayaji-service,Sai Sayaji Service,MNGL,Paud Road,PMC,Maharashtra,18.507218,73.802620,,,,
+mngl/5-lmd-cng,LMD CNG,MNGL,Bavdhan,PMC,Maharashtra,18.511278,73.771028,,,,
+mngl/6-e-way-siddhivinayak,E-Way Siddhivinayak,MNGL,Punawale,PCMC,Maharashtra,18.639472,73.738417,,,,
+mngl/7-sai-expressway-service,Sai Expressway Service,MNGL,Tathawade,PCMC,Maharashtra,18.628167,73.742861,,,,
+mngl/8-sk-enterprise,SK Enterprise,MNGL,tathawade,PCMC,Maharashtra,18.630619,73.742920,,,,
+mngl/9-balwadkar-auto-services,Balwadkar Auto Services,MNGL,Wakad,PCMC,Maharashtra,18.601361,73.754167,,,,
+mngl/10-shinde-petroleum,Shinde Petroleum,MNGL,Kiwale,PCMC,Maharashtra,18.668278,73.727944,,,,
+mngl/11-bp-co-expressway,BP CO Expressway,MNGL,Parandewadi,PCMC,Maharashtra,18.712222,73.652250,,,,
+mngl/12-progrowth-enterprises,Progrowth Enterprises,MNGL,Dapodi,PCMC,Maharashtra,18.585056,73.833194,,,,
+mngl/13-saigauri-petroleum,Saigauri Petroleum,MNGL,Kasarwadi,PCMC,Maharashtra,18.598417,73.828111,,,,
+mngl/14-pimple-petroleum,Pimple Petroleum,MNGL,Pimpri,PCMC,Maharashtra,18.632850,73.799508,,,,
+mngl/15-shree-balaji,Shree Balaji,MNGL,Nigadi,PCMC,Maharashtra,18.664667,73.770278,,,,
+mngl/16-abc-india-ltd,ABC India ltd,MNGL,Talegaon,PCMC,Maharashtra,18.719000,73.669917,,,,
+mngl/17-goodwill-enterprise,Goodwill Enterprise,MNGL,Bhosari,PCMC,Maharashtra,18.619583,73.829944,,,,
+mngl/18-swamy-samarth-service-station,Swamy Samarth Service station',MNGL,Bhosari,PCMC,Maharashtra,18.616611,73.842972,,,,
+mngl/19-sarhaan-petroleum,Sarhaan Petroleum,MNGL,Bhosari,PCMC,Maharashtra,18.627583,73.852722,,,,
+mngl/20-d-r-gavhane-petroleum,D R Gavhane Petroleum,MNGL,Bhosari,PCMC,Maharashtra,18.624643,73.860194,,,,
+mngl/21-kajale-and-sons,kajale and sons,MNGL,Moshi,PCMC,Maharashtra,18.658639,73.849389,,,,
+mngl/22-samruddhi-cng,Samruddhi CNG,MNGL,Nanekarwadi,PCMC,Maharashtra,18.738250,73.857806,,,,
+mngl/23-devendra-autolines,Devendra Autolines,MNGL,Nanekarwadi,PCMC,Maharashtra,18.737806,73.858139,,,,
+mngl/24-chakan-petrol-depot,Chakan petrol Depot,MNGL,Chakan,PCMC,Maharashtra,18.760917,73.859806,,,,
+mngl/25-akshay-kiran-petroleum,Akshay Kiran Petroleum,MNGL,Chakan,PCMC,Maharashtra,18.773116,73.868494,,,,
+mngl/26-highway-petroleum,Highway petroleum,MNGL,Pool Gate,PMC,Maharashtra,18.507083,73.885528,,,,
+mngl/27-swamy-samarth-service-station,Swamy Samarth Service station',MNGL,Hadpsar,PMC,Maharashtra,18.499056,73.920472,,,,
+mngl/28-tekawade-petroleum,Tekawade Petroleum,MNGL,Hadapsar,PMC,Maharashtra,18.499222,73.949000,,,,
+mngl/29-balaji-cng-centre,Balaji CNG Centre,MNGL,Hadapsar,PMC,Maharashtra,18.498111,73.956417,,,,
+mngl/30-shivaji-service-station,Shivaji Service Station,MNGL,Manjari,PMC,Maharashtra,18.497284,73.962085,,,,
+mngl/31-urja-fuel,Urja Fuel,MNGL,Wagholi,PMC,Maharashtra,18.572083,73.954806,,,,
+mngl/32-mngl-shivajinagar,MNGL Shivajinagar,MNGL,Shivajinagar,PMC,Maharashtra,18.534194,73.847639,,,,
+mngl/33-bp-pune-rto,BP PUNE RTO,MNGL,Shivajinagar,PMC,Maharashtra,18.529556,73.863111,,,,
+mngl/34-sangoi-service-station,Sangoi Service station,MNGL,Shivajinagar,PMC,Maharashtra,18.530667,73.847167,,,,
+mngl/35-sarswati-petroleum,Sarswati Petroleum,MNGL,Swargate,PMC,Maharashtra,18.500278,73.866000,,,,
+mngl/36-coco-mukundnagar,COCO Mukundnagar,MNGL,Mukundnagar,PMC,Maharashtra,18.495917,73.869194,,,,
+mngl/37-jyoti-petroleum,Jyoti Petroleum,MNGL,Sinhgad Road,PMC,Maharashtra,18.492250,73.834056,,,,
+mngl/38-mitali-service-station,Mitali Service Station,MNGL,Sinhgad Road,PMC,Maharashtra,18.482556,73.826750,,,,
+mngl/39-shri-sai-petroleum,Shri Sai Petroleum,MNGL,Lohegaon,PMC,Maharashtra,18.590111,73.956306,,,,
+mngl/40-mauli-petroleum,Mauli Petroleum,MNGL,Lohegaon,PMC,Maharashtra,18.613013,73.941378,,,,
+mngl/41-gaikwad-cng,Gaikwad CNG,MNGL,Mundhwa,PMC,Maharashtra,18.533583,73.914889,,,,
+mngl/42-lonkar-cng-station,Lonkar CNG Station,MNGL,Mundhwa,PMC,Maharashtra,18.532250,73.932111,,,,
+mngl/43-rathi-cng-station,Rathi CNG station,MNGL,Katraj,PMC,Maharashtra,18.454250,73.853500,,,,
+mngl/44-s-square-cng-service-station,S Square CNG service station,MNGL,Dhankavadi,PMC,Maharashtra,18.468361,73.851944,,,,
+mngl/45-vitthal-petroleum,Vitthal Petroleum,MNGL,Fursungi,PMC,Maharashtra,18.481000,73.954861,,,,
+mngl/46-tilakraj-cng-station,Tilakraj CNG Station,MNGL,Undri,PMC,Maharashtra,18.464306,73.952611,,,,
+mngl/47-dharmavat-petroleum,Dharmavat Petroleum,MNGL,Pisoli,PMC,Maharashtra,18.448917,73.904389,,,,
+mngl/48-sheetal-petroleum,Sheetal Petroleum,MNGL,Kondhwa,PMC,Maharashtra,18.469111,73.888806,,,,
+mngl/49-ishwar-service-station,Ishwar Service Station,MNGL,Lullanagar,PMC,Maharashtra,18.484167,73.884167,,,,
+mngl/50-vighnaharta-cng-filling-station,Vighnaharta CNG Filling Station,MNGL,Akurdi,PCMC,Maharashtra,18.663111,73.789278,,,,
+mngl/51-afexco-petroleum,Afexco Petroleum,MNGL,Pimpri,PCMC,Maharashtra,18.641778,73.822528,,,,
+mngl/52-mngl-ms,MNGL MS,MNGL,Chikhali,PCMC,Maharashtra,18.664028,73.826500,,,,
+mngl/53-bhosale-cng-pump,Bhosale CNG Pump,MNGL,Chikhali,PCMC,Maharashtra,18.662000,73.812056,,,,
+mngl/54-regal,Regal,MNGL,Alandi Moshi Road,PCMC,Maharashtra,18.682444,73.826000,,,,
+mngl/55-bahirat-patil-cng-station,Bahirat Patil CNG Station,MNGL,Ravet,PCMC,Maharashtra,18.646750,73.742167,,,,
+mngl/56-nrusinha-petroleum,Nrusinha Petroleum,MNGL,Ravet,PCMC,Maharashtra,18.624389,73.758167,,,,
+mngl/57-shiv-parvati-petroleum,Shiv Parvati petroleum,MNGL,Dange Chowk,PCMC,Maharashtra,18.612750,73.765944,,,,
+mngl/58-samarth-service-station,Samarth Service Station,MNGL,Hinjewadi,PCMC,Maharashtra,18.590639,73.747250,,,,
+mngl/59-rajlaxmi-petrohub,Rajlaxmi Petrohub,MNGL,Hinjewadi,PCMC,Maharashtra,18.594639,73.729361,,,,
+mngl/60-vimal-cng,Vimal CNG,MNGL,Wakad,PCMC,Maharashtra,18.603250,73.746917,,,,
+mngl/61-rajmudra-petroleum,Rajmudra Petroleum,MNGL,Marunje,PCMC,Maharashtra,18.612667,73.717333,,,,
+mngl/62-jadhav-patil-petroleum,Jadhav Patil Petroleum,MNGL,Nere Dattawadi,PCMC,Maharashtra,18.617559,73.707653,,,,
+mngl/63-bd-petroleum,BD Petroleum,MNGL,Bhose,PCMC,Maharashtra,18.740222,73.906917,,,,
+mngl/64-shree-swamy-samarth-auto-center,Shree Swamy Samarth Auto Center,MNGL,CHakan,PCMC,Maharashtra,18.759444,73.836250,,,,
+mngl/65-mahadevi-petrol-depot,Mahadevi Petrol depot,MNGL,Chakan,PCMC,Maharashtra,18.759111,73.828778,,,,
+mngl/66-bhama-petroleum,Bhama Petroleum,MNGL,Chakan,PCMC,Maharashtra,18.767069,73.855375,,,,
+mngl/67-shubham-petrol-depot,Shubham Petrol Depot,MNGL,Chakan,PCMC,Maharashtra,18.754056,73.800250,,,,
+mngl/68-harekrishna-petroleum,Harekrishna Petroleum,MNGL,Indori,PCMC,Maharashtra,18.740000,73.745333,,,,
+mngl/69-balaji-enterprise,Balaji Enterprise,MNGL,Talegaon,PCMC,Maharashtra,18.733694,73.652500,,,,
+mngl/70-khandge-service-station,Khandge Service Station,MNGL,Talegaon,PCMC,Maharashtra,18.724306,73.681806,,,,
+mngl/71-sai-samartha,Sai Samartha,MNGL,Sangvi,PCMC,Maharashtra,18.569556,73.817306,,,,
+mngl/72-om-sai-ram-fuel-centre,Om Sai Ram Fuel Centre,MNGL,Pimple Saudagar,PCMC,Maharashtra,18.592194,73.803389,,,,
+mngl/73-jagtap-patil-petroleum,jagtap Patil Petroleum,MNGL,Pimple Gurav,PCMC,Maharashtra,18.597083,73.812361,,,,
+mngl/74-yuvansh-gas-station,Yuvansh Gas station,MNGL,Narhe,PMC,Maharashtra,18.447556,73.820556,,,,
+mngl/75-jai-guru-petroleum,Jai Guru petroleum,MNGL,Nigoje,PCMC,Maharashtra,18.712806,73.797722,,,,
+mngl/76-maulikrupa-enterprise-dodo,MauliKrupa Enterprise (DODO),MNGL,Moshi,PCMC,Maharashtra,18.677514,73.859871,,,,
+mngl/77-shripati-cng,Shripati CNG,MNGL,Pimple Nilakh,PCMC,Maharashtra,18.566816,73.792432,,,,
+mngl/78-magar-fuel-station,Magar Fuel Station,MNGL,Sasanenagar,PMC,Maharashtra,18.488291,73.932187,,,,
+mngl/79-maruti-petroleum,Maruti Petroleum,MNGL,Chakan,PCMC,Maharashtra,18.789709,73.787963,,,,
+mngl/80-bp-police-welfare,BP Police Welfare,MNGL,Baner,PCMC,Maharashtra,18.543760,73.824493,,,,
+mngl/81-sant-tukaram-petroleum,Sant Tukaram Petroleum,MNGL,Moshi,PCMC,Maharashtra,18.708490,73.779282,,,,
+mngl/82-gawade-patil-petroleum,Gawade Patil Petroleum,MNGL,Alandi,PCMC,Maharashtra,18.669844,73.918895,,,,
+mngl/83-mahalaxmi-petroleum,Mahalaxmi petroleum,MNGL,Talegaon,PCMC,Maharashtra,18.732986,73.667558,,,,
+mngl/84-venketshwara-petroleum,Venketshwara Petroleum,MNGL,Kharadi,PMC,Maharashtra,18.545099,73.935476,,,,
+mngl/85-gaikwad-petroleum,Gaikwad Petroleum,MNGL,Chimbli,PCMC,Maharashtra,18.703818,73.848367,,,,
+mngl/86-mngl-ganesh-enterprises-cng,MNGL - Ganesh Enterprises CNG,MNGL,KK Market,PMC,Maharashtra,18.468692,73.859262,,,,
+mngl/87-mngl-radhai-cng,MNGL - Radhai CNG,MNGL,Chimbli,PCMC,Maharashtra,18.701128,73.847792,,,,
+mngl/88-mngl-dattaguru-cng,MNGL - Dattaguru CNG,MNGL,Kuruli,PCMC,Maharashtra,18.721896,73.852052,,,,
+mngl/89-mngl-kamthe-patil-cng,MNGL - Kamthe Patil CNG,MNGL,Yewalewadi,PMC,Maharashtra,18.442268,73.894081,,,,
+mngl/90-jay-ganesh-petro-station,Jay Ganesh Petro Station,MNGL,Handewadi,PMC,Maharashtra,18.458847,73.933644,,,,
+mngl/91-sathe-petroleum,Sathe Petroleum,MNGL,Lohegaon,PMC,Maharashtra,18.597519,73.913430,,,,
+mngl/92-tuljabhavani-petroleum,Tuljabhavani petroleum,MNGL,Moshi alandi Road,PCMC,Maharashtra,18.674752,73.882987,,,,
+mngl/93-gundhare-patil-petroleum,Gundhare Patil Petroleum,MNGL,Alandi Markal Road,PCMC,Maharashtra,18.673438,73.910170,,,,
+mngl/94-laxmi-petroleum,Laxmi Petroleum,MNGL,Maan,PCMC,Maharashtra,18.578080,73.716092,,,,
+mngl/95-shitole-petroleum,Shitole Petroleum,MNGL,Navi Sangvi,PCMC,Maharashtra,18.578807,73.815118,,,,
+mngl/96-shri-nageshwar-petroleum,Shri Nageshwar Petroleum,MNGL,Moshi,PCMC,Maharashtra,18.679497,73.836888,,,,
+mngl/97-rahee-petroleum,Rahee Petroleum,MNGL,Solu,PCMC,Maharashtra,18.666480,73.940658,,,,
+mngl/98-mahalaxmi-energy-services,Mahalaxmi Energy Services,MNGL,Ravet,PCMC,Maharashtra,18.653766,73.733573,,,,
+mngl/99-mngl-jay-ganesh-enterprises,MNGL- Jay Ganesh Enterprises,MNGL,Chikhali,PCMC,Maharashtra,18.687447,73.807964,,,,
+mngl/100-lokeseva-petroleum,Lokeseva Petroleum,MNGL,Chikhali,PCMC,Maharashtra,18.663514,73.810130,,,,
+mngl/101-mngl-balewadi-cng,MNGL -Balewadi CNG,MNGL,Balewadi,PMC,Maharashtra,18.574131,73.771814,,,,
+mngl/102-guruji-petroleum,Guruji Petroleum,MNGL,Bhose,PCMC,Maharashtra,18.740571,73.907880,,,,
+mngl/103-katraj-petroleum,Katraj petroleum,MNGL,Katraj,PMC,Maharashtra,18.442990,73.859849,,,,
+mngl/104-famous-auto-centre,Famous Auto Centre,MNGL,Shivajinagar,PMC,Maharashtra,18.527203,73.842523,,,,
+mngl/105-jaihind-highway-service-station,Jaihind Highway Service Station,MNGL,Chinchwad,PCMC,Maharashtra,18.638723,73.795803,,,,
+mngl/106-lonkar-petroleum,Lonkar Petroleum,MNGL,Lonkar Wasti,PMC,Maharashtra,18.526696,73.954481,,,,
+mngl/107-sai-krupa-services,Sai Krupa Services,MNGL,Ravet,PCMC,Maharashtra,18.644377,73.745825,,,,
+mngl/108-nanekar-cng-station,Nanekar CNG Station,MNGL,"Nanekarwadi, Chakan",PCMC,Maharashtra,18.754795,73.854857,,,,
+mngl/109-mauli-petroleum,Mauli Petroleum,MNGL,"Hanumanwadi, Kelgaon",PCMC,Maharashtra,18.694369,73.889173,,,,
+mngl/110-shivshakti-group-of-petroleum,Shivshakti Group of Petroleum,MNGL,"Kadachiwadi, Chakan",PCMC,Maharashtra,18.747644,73.876863,,,,
+mngl/111-d-c-petroleum,D.C. Petroleum,MNGL,"Biradwadi, Chakan",PCMC,Maharashtra,18.771876,73.845418,,,,
+mngl/112-shri-gajanan-petroleum,Shri Gajanan Petroleum,MNGL,Manjri,PMC,Maharashtra,18.510097,73.961722,,,,
+mngl/113-ladkat-brothers-petroleum,Ladkat Brothers Petroleum,MNGL,Timber Market,PMC,Maharashtra,18.508290,73.868502,,,,
+mngl/114-balkrishna-enterprises,Balkrishna Enterprises,MNGL,Mundhwa,PMC,Maharashtra,18.534054,73.920590,,,,
+mngl/115-lakshmi-cng-station,Lakshmi CNG Station,MNGL,Bhosari,PCMC,Maharashtra,18.637507,73.849128,,,,
+mngl/116-jadhav-brothers-cng,Jadhav Brothers CNG,MNGL,Nigdi,PCMC,Maharashtra,18.658232,73.777756,,,,
+mngl/117-radhe-radhe-petroleum,Radhe Radhe Petroleum,MNGL,Shelgaon,PCMC,Maharashtra,18.731422,73.946443,,,,
+mngl/118-adarsh-automobiles,Adarsh Automobiles,MNGL,Wadgaon Sheri,PMC,Maharashtra,18.562199,73.924698,,,,
+mngl/119-popatrao-kalje-petroleum,Popatrao Kalje Petroleum,MNGL,Charholi,PCMC,Maharashtra,18.658164,73.896817,,,,
+mngl/120-shree-swami-petrol-pump,Shree Swami Petrol Pump,MNGL,Narhe,PMC,Maharashtra,18.454370,73.826908,,,,
+mngl/121-shitole-petroleum,Shitole Petroleum,MNGL,Kasarsai,PCMC,Maharashtra,18.624849,73.683797,,,,
+mngl/122-vishakha-petroleum,Vishakha Petroleum,MNGL,Mhalunge,PCMC,Maharashtra,18.742767,73.796710,,,,
+mngl/123-kalokhe-petroleum,Kalokhe Petroleum,MNGL,Somatane,PCMC,Maharashtra,18.707102,73.682869,,,,
+node/674708235,Kedari Petrol Pump,BPCL,Vitthal Shivarkar Marg,Pune,Maharashtra,18.486548,73.898661,false,,,
+node/1444730730,"CNG Station, R/S Ward",,,R/S Ward,Maharashtra,19.213694,72.837267,false,,,no-address|no-operator|name-generated
+node/1855463959,BPCL Fuel Pump,BPCL,,,Maharashtra,19.214938,72.977444,false,,,no-address
+node/2242268589,National Highway Trucking Centre,HP,,,Maharashtra,19.067743,72.900328,false,,,no-address
+node/2345384738,CNG PETROL PUMP,Indian Oil,KATE VASTI,PUNE,Maharashtra,18.592170,73.803749,false,,,
+node/3289553161,CNG,HP,,,Maharashtra,19.076587,72.877234,false,,,no-address|cng-name-only
+node/3504368176,Bharat Petroleum,BPCL,"Survey No. 19/3, Sinhagad Road",,Maharashtra,18.482702,73.826623,false,,02024345105,
+node/5601795153,Mahanagar Gas,Reliance,,,Maharashtra,19.063177,73.023107,false,,,no-address
+node/6992015108,"CNG Station, Chakan",,,Chakan,Maharashtra,18.738315,73.857687,false,,,no-address|no-operator|name-generated
+node/9120487882,SK CNG Gas Station,Mahanagar Gas,,,Maharashtra,19.149027,72.839974,false,,,no-address
+node/9354791022,Indian Oil Petrol CNG Pump,Indian Oil,,Pimpri Chinchwad,Maharashtra,18.569502,73.817207,false,,,no-address|cng-name-only
+node/9775190033,Bharat Petroleum,BPCL,"NH 8, Kashigaon","Mira Road East, Thane",Maharashtra,19.274638,72.887167,false,,,
+node/9775206668,Bharat Petroleum,BPCL,"NH 8, AG Nagar, Kashimira","Mira Road East, Thane",Maharashtra,19.271645,72.881271,false,,,
+node/9816712776,Yashwantraya Petrol Station & CNG Station,Barawkar And Lonkar,Songaon Shendre Road,Supe,Maharashtra,18.336388,74.374403,true,24/7,,
+node/10294884692,CNG,Fuel GAS,College Road,Otur,Maharashtra,19.252359,74.001550,false,,,
+node/10603598575,CHANDERE CNG Station,CHANDERE CNG Station,"sus, Sus Road",Pune,Maharashtra,18.552645,73.757490,false,,,
+node/10660664531,CNG Pump,,,Ravet,Maharashtra,18.646833,73.742276,false,,,no-address|no-operator|cng-name-only
+node/11145761548,HP,HP,,Vengurla,Maharashtra,15.871067,73.646079,false,,,no-address
+node/11210871972,Ashoka CNG Pump,,,,Maharashtra,18.376871,76.558271,false,,,no-address|no-operator|cng-name-only
+node/11210934846,Ashoka CNG,,,,Maharashtra,18.385962,76.550967,false,,,no-address|no-operator|cng-name-only
+node/11672622694,Bharat Petroleum,BPCL,,,Maharashtra,19.699254,72.762164,false,,,no-address
+node/11688010839,Gaikwad CNG station,MNGL,,,Maharashtra,18.532322,73.931865,false,,,no-address
+node/11812030007,Indian Oil Petrol Pump,Indian Oil,Nagar Road,Wagholi,Maharashtra,18.580337,73.975254,false,,,
+node/13313437857,"CNG Station, Nagpur City",,,Nagpur City,Maharashtra,21.177865,79.125278,false,,,no-address|no-operator|name-generated
+node/13380385854,"CNG Station, pune",,,pune,Maharashtra,18.637415,73.849217,false,,,no-address|no-operator|name-generated
+node/13611124124,J P Petroleum - Bharat Petroleum,BPCL,,Ambawade S.W.,Maharashtra,17.819548,74.093554,false,,,no-address
+node/13786285001,Bharat Petroleum & CNG Pump,BPCL,,,Maharashtra,16.003401,73.688949,false,,,no-address|cng-name-only
+node/14081950175,Mahanagar Gas,Mahanagar Gas,,,Maharashtra,18.039448,76.080433,false,,,no-address
+way/40734170,Mahanagar Gas,Mahanagar Gas,,,Maharashtra,18.985254,72.830855,false,,,no-address|way-centroid
+way/72547767,HP Petrol Station,HP,,,Maharashtra,18.960853,72.832141,false,,,no-address|way-centroid
+way/193632131,Lotus Petrol Pump,,,,Maharashtra,19.142679,72.831771,true,24/7,,no-address|way-centroid|no-operator
+way/193632143,"CNG Station, Oshiwara",,,Oshiwara,Maharashtra,19.142748,72.831188,false,,,no-address|way-centroid|no-operator|name-generated
+way/210788895,BPCL,BPCL,,,Maharashtra,18.598390,73.828190,false,,,no-address|way-centroid
+way/220421976,Bharat Petroleum;Mahanagar Gas,BPCL,,,Maharashtra,19.083070,73.001215,false,"Mo-Su,PH 00:00-23:59+",,no-address|way-centroid
+way/220926664,Mahanagar Gas,Mahanagar Gas,,,Maharashtra,19.011981,73.035811,false,,,no-address|way-centroid
+way/236178680,Chikhali CNG Pump,MNGL,,,Maharashtra,18.664245,73.826683,true,24/7,,no-address|way-centroid
+way/238842690,MNGL CNG Pump,MNGL,,,Maharashtra,18.534183,73.847651,false,,,no-address|way-centroid
+way/262803648,Bharat Petroleum,BPCL,,,Maharashtra,18.639387,73.738335,false,,,no-address|way-centroid
+way/262803649,HP,HP,,,Maharashtra,18.601196,73.754348,false,,,no-address|way-centroid
+way/262803654,HP,HP,,,Maharashtra,18.628264,73.742393,false,,,no-address|way-centroid
+way/291763577,BPCL;MGL,BPCL,,,Maharashtra,19.118038,73.006688,false,,,no-address|way-centroid
+way/353148240,Indian Oil,Indian Oil,,,Maharashtra,19.102374,72.919607,false,Mo-Su 10:00-22:00,,no-address|way-centroid
+way/359745704,Indian Oil Petrol Pump,Indian Oil,Nagar Road,Wagholi,Maharashtra,18.580351,73.975230,false,,,way-centroid
+way/360256873,Rathi Cng gas Station,,"bharti vidyapeeth road, katraj",Pune,Maharashtra,18.453989,73.853487,false,,,way-centroid|no-operator
+way/360266650,Dharmavat Petrol Pump,BPCL,,,Maharashtra,18.448715,73.904331,false,,,no-address|way-centroid
+way/416021859,Mahanagar CNG station,Mahanagar Gas,,,Maharashtra,19.034594,73.028686,false,,,no-address|way-centroid
+way/580190219,MNGL CNG,MNGL,,,Maharashtra,18.585025,73.833023,true,24/7,,no-address|way-centroid
+way/616291149,MNGL,MNGL,,,Maharashtra,18.663307,73.789476,false,,,no-address|way-centroid
+way/652015869,LMD CNG,LMD CNG,,,Maharashtra,18.511266,73.770950,false,,,no-address|way-centroid
+way/905418916,"CNG Station, Govandi West",,,Govandi West,Maharashtra,19.044543,72.916476,false,,,no-address|way-centroid|no-operator|name-generated
+way/1109900436,Pimple Nilakh CNG Pump,MNGL,,Pune,Maharashtra,18.566694,73.792555,false,,,no-address|way-centroid
+way/1120517221,Mahanager Gas,Mahanagar Gas,,,Maharashtra,19.289747,72.864608,false,,,no-address|way-centroid
+way/1162011848,Indian Oil,Indian Oil,,kandhar,Maharashtra,18.879215,77.176431,true,24/7,,no-address|way-centroid
+way/1162012633,Maharashtra Natural Gas Limited,Maharashtra Natural Gas Limited,Dehu - Alandi Road,,Maharashtra,18.677292,73.859805,false,,,way-centroid
+way/1191572656,HP,HP,,,Maharashtra,18.436462,73.142262,false,,,no-address|way-centroid
+way/1251553364,Indian Oil Petrol Pump,Indian Oil,Gat no.11,Loni kand,Maharashtra,18.624352,74.031235,false,,,way-centroid
+way/1272025329,"CNG Station, Wagholi",,Nagar Road,Wagholi,Maharashtra,18.580237,73.975061,false,,,way-centroid|no-operator|name-generated
+way/1344760159,Indian Oil Pump (CNG Available),Indian Oil,,,Maharashtra,18.457775,73.829162,false,,,no-address|way-centroid
+way/1363598084,Mahanagar gas,Mahanagar Gas,,,Maharashtra,19.175557,72.864375,false,,,no-address|way-centroid
+way/1389750590,MNGL CNG Pump,MNGL,,,Maharashtra,18.603147,73.746881,false,,,no-address|way-centroid
+way/1431677172,Mahanagar Gas CNG Station,Mahanagar Gas,"55, MIDC Road",,Maharashtra,19.175428,73.002309,true,24/7,099877 79177,way-centroid
+way/1462808930,Bharat Petroleum,BPCL,Pune - Nashik Highway,,Maharashtra,19.302918,74.170591,false,,,way-centroid
+way/1485786118,Bharat Petroleum,BPCL,,,Maharashtra,20.220063,79.018915,false,,,no-address|way-centroid
+way/1494375732,CNG Pump Indapur,,,,Maharashtra,18.286095,73.245559,false,,,no-address|way-centroid|no-operator|cng-name-only
+way/1505092258,Laxmi Petroleum (Bharat Petroleum),BPCL,,,Maharashtra,18.577979,73.716079,false,,,no-address|way-centroid
+way/1532683609,HP,HP,,,Maharashtra,19.128147,72.832216,false,,,no-address|way-centroid
+way/1540277088,MNGL CNG Station,MNGL,,,Maharashtra,18.630632,73.742897,false,,,no-address|way-centroid
+node/1805764129,Maganhalli Basappa Petrol Station,Indian Oil,,,Karnataka,14.441589,75.922763,false,,,no-address
+node/12069832603,GAIL Gas CNG Station,GAIL,,,Karnataka,12.947796,74.812042,false,,,no-address|cng-name-only
+node/12285541096,Go Gas,,,,Karnataka,13.039379,77.596215,false,,,no-address|no-operator
+way/635317788,Indian Oil,Indian Oil,,,Karnataka,12.945250,77.618989,false,,,no-address|way-centroid
+way/640257945,JIO BP,JIO BP,,,Karnataka,13.165368,77.628968,false,,,no-address|way-centroid
+way/1114994682,GAIL,GAIL,,,Karnataka,13.154663,77.685096,false,,,no-address|way-centroid
+way/1120737746,GAIL,GAIL,,,Karnataka,12.996147,77.519409,false,,,no-address|way-centroid
+way/1210592626,Gail Gas,GAIL,,,Karnataka,12.947388,77.579700,false,,,no-address|way-centroid
+way/1239012965,GAIL,GAIL,,,Karnataka,13.057551,77.546644,false,,,no-address|way-centroid
+way/1279894893,GAIL Gas CNG Station,GAIL,,,Karnataka,13.153425,77.728555,false,,,no-address|way-centroid
+way/1284773488,GAIL Gas,GAIL,,,Karnataka,13.040566,77.618612,false,,,no-address|way-centroid
+way/1287042070,Bharat Petroleum,BPCL,,,Karnataka,13.136912,77.568530,false,,,no-address|way-centroid
+way/1324379093,Gail Gas,GAIL,,,Karnataka,12.946892,77.746957,false,,,no-address|way-centroid
+way/1327758223,GAIL,GAIL,,,Karnataka,12.889281,77.437879,false,,,no-address|way-centroid
+way/1328835914,GAIL,GAIL,,,Karnataka,12.871422,77.583460,false,,,no-address|way-centroid
+way/1346376006,Vaishnavi Petroleums,Rajanikanth H,,,Karnataka,15.319893,76.310748,false,,,no-address|way-centroid
+way/1351989866,GAIL CNG,GAIL,,,Karnataka,12.873365,77.540406,false,,,no-address|way-centroid
+way/1353654972,Indian Oil,Indian Oil,,,Karnataka,12.904071,77.746709,false,,,no-address|way-centroid
+way/1450047024,Saddharma CNG Gas Station,,,,Karnataka,15.250734,76.360751,false,,,no-address|way-centroid|no-operator
+way/1454788768,Gail gas CNG station,GAIL,,,Karnataka,13.005028,77.685633,false,,,no-address|way-centroid
+way/1499403386,GAIL's,GAIL,,,Karnataka,13.065986,77.641431,false,,,no-address|way-centroid

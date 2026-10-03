@@ -18,8 +18,14 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const CSV_PATH = resolve(process.cwd(), "data", "stations-draft.csv");
-const OUT_PATH = resolve(process.cwd(), "data", "stations-review.html");
+/** Parses a `--key=value` flag. */
+function flag(name) {
+  const hit = process.argv.find((arg) => arg.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : null;
+}
+
+const CSV_PATH = resolve(process.cwd(), flag("file") ?? "data/stations-draft.csv");
+const OUT_PATH = resolve(process.cwd(), flag("out") ?? "data/stations-review.html");
 
 function parseCSV(text) {
   const rows = [];
@@ -184,11 +190,11 @@ async function main() {
   process.stdout.write(
     [
       "",
-      `Wrote data/stations-review.html`,
+      `Wrote ${OUT_PATH}`,
       `  ${stations.length} stations, ${flaggedCount} flagged, ${likelyNonCng.length} possibly not CNG`,
       "",
       "Open it in a browser and click through each satellite link.",
-      "Edit data/stations-draft.csv directly with what you find --",
+      `Edit ${CSV_PATH} directly with what you find --`,
       "this review sheet is read-only, it does not write back to the CSV.",
       "",
     ].join("\n"),
